@@ -1,3 +1,17 @@
+# 修改中文和时区
+settiongs.py
+```python
+## 其它配置代码...
+
+# 把英文改为中文
+LANGUAGE_CODE = 'zh-hans'
+
+# 把国际时区改为中国时区
+TIME_ZONE = 'Asia/Shanghai'
+
+## 其它配置代码...
+```
+
 # python3+django+mysql 的驱动问题
 
 在 __init__.py 中加入
