@@ -74,6 +74,8 @@
                     {% block main %} {% endblock main %}
                 </main>
                 <aside class="col-md-4">
+                    {% block toc %}
+                    {% endblock toc %}
                     <div class="widget widget-recent-posts">
                         <h3 class="widget-title">最新文章</h3> {% get_recent_posts as recent_post_list %}
                         <ul>
@@ -94,8 +96,16 @@
                             {% empty %} 暂无归档！ {% endfor %}
                         </ul>
                     </div>
-                    {% block toc %}
-                    {% endblock toc %}
+                    <div class="widget widget-category">
+                        <h3 class="widget-title">分类</h3> {% get_categories as category_list %}
+                        <ul>
+                            {% for category in category_list %}
+                            <li>
+                                <a href="#">{{ category.name }} <span class="post-count">(13)</span></a>
+                            </li>
+                            {% empty %} 暂无分类！ {% endfor %}
+                        </ul>
+                    </div>
                 </aside>
             </div>
         </div>
