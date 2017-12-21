@@ -84,6 +84,16 @@
                             {% empty %} 暂无文章！ {% endfor %}
                         </ul>
                     </div>
+                    <div class="widget widget-archives">
+                        <h3 class="widget-title">归档</h3> {% archives as date_list %}
+                        <ul>
+                            {% for date in date_list %}
+                            <li>
+                                <a href="#">{{ date.year }} 年 {{ date.month }} 月</a>
+                            </li>
+                            {% empty %} 暂无归档！ {% endfor %}
+                        </ul>
+                    </div>
                     {% block toc %}
                     {% endblock toc %}
                 </aside>
