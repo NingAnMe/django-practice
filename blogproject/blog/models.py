@@ -32,6 +32,12 @@ class Post(models.Model):
     # 文章正文
     body = models.TextField()
 
+    # 创建时间
+    created_time = models.DateTimeField()
+
+    # 最后一次修改时间
+    modified_time = models.DateTimeField()
+
     # 文章摘要
     excerpt = models.CharField(max_length=200, blank=True)
 
