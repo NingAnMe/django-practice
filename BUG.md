@@ -66,3 +66,11 @@ shell> mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql -u root -p mysql
 
 # 启动 nginx 没有反应
 查看本机的 localhost 地址，查看是否 nginx 已经启动了
+
+# gunicorn 环境变量不正确
+把 gunicorn 强制安装在虚拟环境中
+```python
+source venv/bin/activate
+pip install -I gunicorn
+gunicorn --bind unix:/tmp/localhost.socket blogproject.wsgi:application
+```
