@@ -63,3 +63,6 @@ shell> mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql -u root -p mysql
 >> print(Post.objects.filter(created_time__month=12).query)
 ```
 可看到sql语句用来时区转换函数’CONVERT_TZ‘，然而mysql由于无法将’UTC‘，’Asia/Shanghai'等转化为具体时差，从而使得sql语句执行结果返回null
+
+# 启动 nginx 没有反应
+查看本机的 localhost 地址，查看是否 nginx 已经启动了
