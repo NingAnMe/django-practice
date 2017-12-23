@@ -15,5 +15,6 @@ urlpatterns = [
         views.archives, name='archives'),
 
     # 文章分类页
-    url(r'^category/(?P<pk>[0-9]+)/$', views.category, name='category'),
+    url(r'^category/(?P<pk>[0-9]+)/$',
+        views.CategoryView.as_view(), name='category'),
 ]
