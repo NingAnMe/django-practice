@@ -50,8 +50,21 @@ class Post(models.Model):
     # 文章作者
     author = models.ForeignKey(User)
 
+    # 阅读次数
+    views = models.PositiveIntegerField(default=0)
+
     def __str__(self):
         return self.title
 
     def get_absolute_url(self):
+        '''
+        获取 url 绝对地址
+        '''
         return reverse('blog:detail', kwargs={'pk': self.pk})
+
+    def increase_views(self):
+        '''
+        阅读数加 1
+        '''
+        self.views += 1
+        self.save(update_fields=['views'])

@@ -15,6 +15,11 @@ def detail(request, pk):
     文章详情页
     '''
     post = get_object_or_404(Post, pk=pk)
+
+    # 阅读量加 1
+    post.increase_views()
+
+    # Markdown 格式解析
     post.body = markdown.markdown(post.body,
                                   extensions=['markdown.extensions.extra',
                                               'markdown.extensions.codehilite',
@@ -28,6 +33,7 @@ def detail(request, pk):
                'form': form,
                'comment_list': comment_list,
                }
+    
     return render(request, 'blog/detail.html', context=context)
 
 
