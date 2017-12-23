@@ -42,19 +42,24 @@ def detail(request, pk):
     return render(request, 'blog/detail.html', context=context)
 
 
-def archives(request, year, month):
+class ArchivesView(IndexView):
     '''
     文章归档页
     '''
-    post_list = Post.objects.filter(
-        created_time__month=month,).order_by('-created_time')
-    return render(request, 'blog/index.html', context={'post_list': post_list})
+
+    def get_queryset(self):
+        year = self.kwargs.get('year')
+        month = self.kwargs.get('month')
+        return super(ArchivesView, self).get_queryset().filter(
+            created_time__year=year,
+            created_time__month=month,).order_by('-created_time')
 
 
 class CategoryView(IndexView):
     '''
     文章分类页
     '''
+
     def get_queryset(self):
         cate = get_object_or_404(Category, pk=self.kwargs.get('pk'))
         return super(CategoryView, self).get_queryset().filter(category=cate)

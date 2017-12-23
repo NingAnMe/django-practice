@@ -12,7 +12,7 @@ urlpatterns = [
 
     # 文章日期归档页
     url(r'^archives/(?P<year>[0-9]{4})/(?P<month>[0-9]{1,2})/$',
-        views.archives, name='archives'),
+        views.ArchivesView.as_view(), name='archives'),
 
     # 文章分类页
     url(r'^category/(?P<pk>[0-9]+)/$',
