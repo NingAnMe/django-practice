@@ -1,6 +1,10 @@
+# blog_tags.py
+'''
+模板标签
+'''
 from django import template
 from django.db.models.aggregates import Count
-from ..models import Post, Category
+from ..models import Post, Category, Tag
 
 register = template.Library()
 
@@ -28,6 +32,16 @@ def get_categories():
     分类标签模板
     '''
     # __gt 表示大于， __lte表示小于
+    # Count 为标签添加一个计数的属性
     categories = Category.objects.annotate(
-            num_posts=Count('post')).filter(num_posts__gt=0)
+        num_posts=Count('post')).filter(num_posts__gt=0)
     return categories
+
+
+@register.simple_tag
+def get_tags():
+    '''
+    标签标签模板
+    '''
+    tags = Tag.objects.annotate(num_posts=Count('post')).filter(num_posts__gt=0)
+    return tags
