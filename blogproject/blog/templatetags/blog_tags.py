@@ -1,4 +1,5 @@
 from django import template
+from django.db.models.aggregates import Count
 from ..models import Post, Category
 
 register = template.Library()
@@ -26,4 +27,7 @@ def get_categories():
     '''
     分类标签模板
     '''
-    return Category.objects.all()
+    # __gt 表示大于， __lte表示小于
+    categories = Category.objects.annotate(
+            num_posts=Count('post')).filter(num_posts__gt=0)
+    return categories
