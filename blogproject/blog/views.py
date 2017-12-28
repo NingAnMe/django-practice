@@ -1,7 +1,9 @@
 import markdown
+from markdown.extensions.toc import TocExtension
 
 from django.shortcuts import render, get_object_or_404
 from django.views.generic import ListView, DetailView
+from django.utils.text import slugify
 from comments.forms import CommentForm
 from .models import Post, Category, Tag
 
@@ -32,12 +34,13 @@ class PostDetailView(DetailView):
 
     def get_object(self, queryset=None):
         post = super(PostDetailView, self).get_object(queryset=None)
-        post.body = markdown.markdown(post.body,
-                                      extensions=[
-                                              'markdown.extensions.extra',
-                                              'markdown.extensions.codehilite',
-                                              'markdown.extensions.toc',
-                                          ],)
+        markdown_post = markdown.Markdown(extensions=[
+                'markdown.extensions.extra',
+                'markdown.extensions.codehilite',
+                TocExtension(slugify=slugify),
+            ])
+        post.body = markdown_post.convert(post.body)
+        post.toc = markdown_post.toc
         return post
 
     def get_context_data(self, **kwargs):
