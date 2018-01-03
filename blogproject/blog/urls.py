@@ -22,4 +22,7 @@ urlpatterns = [
     # 标签分类页
     url(r'^tag/(?P<pk>[0-9]+)/$',
         views.TagView.as_view(), name='tag'),
+
+    # 搜索结果页
+    url(r'^search/$', views.search, name='search'),
 ]
