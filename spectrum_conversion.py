@@ -53,23 +53,38 @@ def main():
         rad_lbl = rad_lbl * 1.0e7
 
         # ################### Compute IASI spectrum #############
+        conversion_name = 'LBL2IASI_{}'.format(iband)
         spec_lbl2iasi = lbl2other(
             rad_lbl, bf_lbl, ef_lbl, df_lbl,
             IASI_BAND_F1[iband], IASI_BAND_F2[iband], IASI_D_FREQUENCY[iband],
             IASI_F_NYQUIST, IASI_RESAMPLE_MAXX[iband], IASI_FILTER_WIDTH[iband],
-            iasi_apod, conversion_name='LBL2IASI_{}'.format(iband),
-            plot_show=True
+            iasi_apod, conversion_name=conversion_name,
         )
 
         statistics_print(spec_lbl2iasi)
-
+        #
         # ################### Compute CrIS spectrum #############
+        conversion_name = 'LBL2CRIS_{}'.format(iband)
         spec_lbl2cris = lbl2other(
             rad_lbl, bf_lbl, ef_lbl, df_lbl,
-            CRIS_BAND_F1[0], CRIS_BAND_F2[0], CRIS_D_FREQUENCY[0],
-            CRIS_F_NYQUIST, CRIS_RESAMPLE_MAXX[0], FILTER_WIDTH, cris_apod)
+            CRIS_BAND_F1[iband], CRIS_BAND_F2[iband], CRIS_D_FREQUENCY[iband],
+            CRIS_F_NYQUIST, CRIS_RESAMPLE_MAXX[iband], CRIS_FILTER_WIDTH[iband],
+            cris_apod, conversion_name=conversion_name
+        )
 
         statistics_print(spec_lbl2cris)
+
+        # ################### Compute IASI to CrIS spectrum #############
+        conversion_name = 'IASI2CRIS_{}'.format(iband)
+        spec_iasi2cris = ori2other(
+            spec_lbl2iasi, IASI_BAND_F1[iband], IASI_BAND_F2[iband], IASI_D_FREQUENCY[iband],
+            CRIS_BAND_F1[iband], CRIS_BAND_F2[iband], CRIS_D_FREQUENCY[iband],
+            CRIS_F_NYQUIST, CRIS_RESAMPLE_MAXX[iband], CRIS_FILTER_WIDTH[iband],
+            apodization_ori=iasi_apod, apodization_other=cris_apod,
+            conversion_name=conversion_name,
+        )
+
+        statistics_print(spec_iasi2cris)
 
 
 def main_origin():
@@ -554,4 +569,4 @@ def rad2tbb(rad, center_wave):
 
 if __name__ == '__main__':
     main()
-    main_origin()
+    # main_origin()
