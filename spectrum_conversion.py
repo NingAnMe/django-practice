@@ -7,41 +7,111 @@ import os
 
 import numpy as np
 from netCDF4 import Dataset
+import h5py
 
 from conversion import lbl2other, ori2other
 
-IBAND = [0]  # band 1、 2 or 3，光谱带
+IBAND = [0, 1, 2]  # band 1、 2 or 3，光谱带
 LBL_DIR = 'D:/nsmc/LBL/data/'
 
 # #########  仪器参数 #############
 FILTER_WIDTH = 20.0  # cm-1  # COS过滤器过滤的宽度
 
 IASI_F_NYQUIST = 6912.0  # 频带宽度  cm-1
-IASI_RESAMPLE_MAXX = [2.0, 2.0, 2.0]  # cm OPD
-IASI_D_FREQUENCY = [0.25, 0.25, 0.25]  # v cm-1  光谱分辨率
-IASI_BAND_F1 = [645.00, 1210.00, 2000.0]  # 光谱带开始
-IASI_BAND_F2 = [1209.75, 1999.75, 2760.0]  # 光谱带结束
-IASI_FILTER_WIDTH = [20.0, 20.0, 20.0]
+IASI_RESAMPLE_MAXX = [2.0, ]  # cm OPD
+IASI_D_FREQUENCY = [0.25, ]  # v cm-1  光谱分辨率
+IASI_BAND_F1 = [645.00, ]  # 光谱带开始
+IASI_BAND_F2 = [2760.75, ]  # 光谱带结束
+IASI_FILTER_WIDTH = [20.0, ]
 
 CRIS_F_NYQUIST = 5875.0
-CRIS_RESAMPLE_MAXX = [0.8, 0.8, 0.8]
-CRIS_D_FREQUENCY = [0.625, 0.625, 0.625]
-CRIS_BAND_F1 = [650.00, 1210.00, 2155.0]
-CRIS_BAND_F2 = [1135.00, 1750.00, 2550.0]
-CRIS_FILTER_WIDTH = [20.0, 20.0, 20.0]
+CRIS_RESAMPLE_MAXX = [0.8, ]
+CRIS_D_FREQUENCY = [0.625, ]
+CRIS_BAND_F1 = [645.00, ]
+CRIS_BAND_F2 = [2760.75, ]
+CRIS_FILTER_WIDTH = [20.0, ]
 
-HIRAS_F_NYQUIST = 5866.0
-HIRAS_RESAMPLE_MAXX = [0.8, 0.8, 0.8]
-HIRAS_D_FREQUENCY = [0.625, 1.25, 2.5]
-HIRAS_BAND_F1 = [650.00, 1210.00, 2155.0]
-HIRAS_BAND_F2 = [1095.00, 1750.00, 2550.0]
-HIRAS_FILTER_WIDTH = [20.0, 24.0, 20.0]
+# IASI_F_NYQUIST = 6912.0  # 频带宽度  cm-1
+# IASI_RESAMPLE_MAXX = [2.0, 2.0, 2.0]  # cm OPD
+# IASI_D_FREQUENCY = [0.25, 0.25, 0.25]  # v cm-1  光谱分辨率
+# IASI_BAND_F1 = [645.00, 1210.00, 2000.0]  # 光谱带开始
+# IASI_BAND_F2 = [1209.75, 1999.75, 2760.0]  # 光谱带结束
+# IASI_FILTER_WIDTH = [20.0, 20.0, 20.0]
+
+# CRIS_F_NYQUIST = 5875.0
+# CRIS_RESAMPLE_MAXX = [0.8, 0.8, 0.8]
+# CRIS_D_FREQUENCY = [0.625, 0.625, 0.625]
+# CRIS_BAND_F1 = [650.00, 1210.00, 2155.0]
+# CRIS_BAND_F2 = [1135.00, 1750.00, 2550.0]
+# CRIS_FILTER_WIDTH = [20.0, 20.0, 20.0]
+#
+# HIRAS_F_NYQUIST = 5866.0
+# HIRAS_RESAMPLE_MAXX = [0.8, 0.8, 0.8]
+# HIRAS_D_FREQUENCY = [0.625, 1.25, 2.5]
+# HIRAS_BAND_F1 = [650.00, 1210.00, 2155.0]
+# HIRAS_BAND_F2 = [1095.00, 1750.00, 2550.0]
+# HIRAS_FILTER_WIDTH = [20.0, 24.0, 20.0]
 
 
 def main():
+    lbl_file = os.path.join(LBL_DIR, 'lblrtm_res_001.h5')
+    data = read_hdf5(lbl_file)
+    # print data
+
+    rad_lbl = data['SPECTRUM']
+    rad_lbl = rad_lbl.reshape(-1)
+    bf_lbl = data['BEGIN_FREQUENCY']
+    ef_lbl = data['END_FREQUENCY']
+    df_lbl = data['FREQUENCY_INTERVAL']
+
+    rad_lbl = rad_lbl * 1.0e7
+
+    iband = 0
+
+    # ################### Compute IASI spectrum #############
+    conversion_name = 'pic/LBL2IASI_all'
+    spec_lbl2iasi, wavenumber_lbl2iasi = lbl2other(
+        rad_lbl, bf_lbl, ef_lbl, df_lbl,
+        IASI_BAND_F1[iband], IASI_BAND_F2[iband], IASI_D_FREQUENCY[iband],
+        IASI_F_NYQUIST, IASI_RESAMPLE_MAXX[iband], IASI_FILTER_WIDTH[iband],
+        iasi_apod, conversion_name=conversion_name,
+    )
+    print(wavenumber_lbl2iasi[0], wavenumber_lbl2iasi[-1])
+    statistics_print(spec_lbl2iasi)
+
+    # ################### Compute CrIS spectrum #############
+    conversion_name = 'pic/LBL2CRIS_all'
+    spec_lbl2cris, wavenumber_lbl2cris = lbl2other(
+        rad_lbl, bf_lbl, ef_lbl, df_lbl,
+        CRIS_BAND_F1[iband], CRIS_BAND_F2[iband], CRIS_D_FREQUENCY[iband],
+        CRIS_F_NYQUIST, CRIS_RESAMPLE_MAXX[iband], CRIS_FILTER_WIDTH[iband],
+        cris_apod, conversion_name=conversion_name
+    )
+    print(wavenumber_lbl2cris[0], wavenumber_lbl2cris[-1])
+    statistics_print(spec_lbl2cris)
+
+    # ################### Compute IASI to CrIS spectrum #############
+    conversion_name = 'pic/IASI2CRIS_all'
+    spec_iasi2cris, wavenumber_iasi2cris = ori2other(
+        spec_lbl2iasi, IASI_BAND_F1[iband], IASI_BAND_F2[iband], IASI_D_FREQUENCY[iband],
+        CRIS_BAND_F1[iband], CRIS_BAND_F2[iband], CRIS_D_FREQUENCY[iband],
+        CRIS_F_NYQUIST, CRIS_RESAMPLE_MAXX[iband], CRIS_FILTER_WIDTH[iband],
+        apodization_ori=iasi_apod, apodization_other=cris_apod,
+        conversion_name=conversion_name,
+    )
+    print(wavenumber_iasi2cris[0], wavenumber_iasi2cris[-1])
+    statistics_print(spec_iasi2cris)
+
+    spec_bias = spec_iasi2cris - spec_lbl2cris
+    from conversion import plot_scatter
+    kwargs = {'s': 0.1}
+    plot_scatter('pic/IASI2CRIS_all_bias.png', wavenumber_iasi2cris, spec_bias, **kwargs)
+
+
+def main_one():
     for iband in IBAND:
         lbl_file = os.path.join(LBL_DIR,
-                                'iasiB{:1d}_metop-a_lbl_radSpectrum.nc'.format(iband+1))
+                                'iasiB{:1d}_metop-a_lbl_radSpectrum.nc'.format(iband + 1))
         data = read_nc(lbl_file)
         # print data
 
@@ -50,47 +120,47 @@ def main():
         ef_lbl = data['END_FREQUENCY']
         df_lbl = data['FREQUENCY_INTERVAL']
 
-        rad_lbl = rad_lbl * 1.0e7
+        rad_lbl = rad_lbl.reshape(-1) * 1.0e7
 
         # ################### Compute IASI spectrum #############
         conversion_name = 'LBL2IASI_{}'.format(iband)
-        spec_lbl2iasi = lbl2other(
+        spec_lbl2iasi, wavenumber_lbl2iasi = lbl2other(
             rad_lbl, bf_lbl, ef_lbl, df_lbl,
             IASI_BAND_F1[iband], IASI_BAND_F2[iband], IASI_D_FREQUENCY[iband],
             IASI_F_NYQUIST, IASI_RESAMPLE_MAXX[iband], IASI_FILTER_WIDTH[iband],
             iasi_apod, conversion_name=conversion_name,
         )
-
+        print(wavenumber_lbl2iasi[0], wavenumber_lbl2iasi[-1])
         statistics_print(spec_lbl2iasi)
-        #
+
         # ################### Compute CrIS spectrum #############
         conversion_name = 'LBL2CRIS_{}'.format(iband)
-        spec_lbl2cris = lbl2other(
+        spec_lbl2cris, wavenumber_lbl2cris = lbl2other(
             rad_lbl, bf_lbl, ef_lbl, df_lbl,
             CRIS_BAND_F1[iband], CRIS_BAND_F2[iband], CRIS_D_FREQUENCY[iband],
             CRIS_F_NYQUIST, CRIS_RESAMPLE_MAXX[iband], CRIS_FILTER_WIDTH[iband],
             cris_apod, conversion_name=conversion_name
         )
-
+        print(wavenumber_lbl2cris[0], wavenumber_lbl2cris[-1])
         statistics_print(spec_lbl2cris)
 
         # ################### Compute IASI to CrIS spectrum #############
         conversion_name = 'IASI2CRIS_{}'.format(iband)
-        spec_iasi2cris = ori2other(
+        spec_iasi2cris, wavenumber_iasi2cris = ori2other(
             spec_lbl2iasi, IASI_BAND_F1[iband], IASI_BAND_F2[iband], IASI_D_FREQUENCY[iband],
             CRIS_BAND_F1[iband], CRIS_BAND_F2[iband], CRIS_D_FREQUENCY[iband],
             CRIS_F_NYQUIST, CRIS_RESAMPLE_MAXX[iband], CRIS_FILTER_WIDTH[iband],
             apodization_ori=iasi_apod, apodization_other=cris_apod,
             conversion_name=conversion_name,
         )
-
+        print(wavenumber_iasi2cris[0], wavenumber_iasi2cris[-1])
         statistics_print(spec_iasi2cris)
 
 
 def main_origin():
     for iband in IBAND:
         lbl_file = os.path.join(LBL_DIR,
-                                'iasiB{:1d}_metop-a_lbl_radSpectrum.nc'.format(iband+1))
+                                'iasiB{:1d}_metop-a_lbl_radSpectrum.nc'.format(iband + 1))
         data = read_nc(lbl_file)
         # print data
 
@@ -265,7 +335,7 @@ def main_origin():
         frequency_filter = frequency[if1:if2]  # 600-620cm-1
 
         bfilter = 0.5 * (
-                    1.0 + np.cos((frequency_filter - frequency_filter[0]) * np.pi / FILTER_WIDTH))
+                1.0 + np.cos((frequency_filter - frequency_filter[0]) * np.pi / FILTER_WIDTH))
         ffilter = bfilter[::-1]
 
         spectrum[if1:if2] = spectrum[if1:if2] * ffilter
@@ -347,7 +417,7 @@ def main_origin():
         # apply cris apodization
         a = 0.23
         coef = [a, (1.0 - 2.0 * a), a]
-        for i in xrange(nt1, nt2 + 1):
+        for i in range(nt1, nt2 + 1):
             spectrum_cris[i - nt1] = sum(spectrum_cris_comp[i - 1: i + 2] * coef)
 
         # p5 hamming apod
@@ -479,7 +549,7 @@ def main_origin():
         # apply cris apodization
         a = 0.23
         coef = [a, (1.0 - 2.0 * a), a]
-        for i in xrange(nt1, nt2 + 1):
+        for i in range(nt1, nt2 + 1):
             spectrum_cris[i - nt1] = sum(spectrum_cris_comp[i - 1: i + 2] * coef)
 
         statistics_print(spectrum_cris)
@@ -498,7 +568,7 @@ def main_origin():
 
 
 def statistics_print(data):
-    print data[0], data[-1], np.size(data), np.min(data), np.max(data), np.mean(data)
+    print(data[0], data[-1], np.size(data), np.min(data), np.max(data), np.mean(data))
 
 
 def iasi_apod(x, fwhm=0.5):
@@ -550,7 +620,25 @@ def read_nc(in_file):
         'END_FREQUENCY': end_wn,  # 结束频率
         'FREQUENCY_INTERVAL': wn_interval,  # 频率间隔
     }
+    f.close()
     return data
+
+
+def read_hdf5(in_file):
+    with h5py.File(in_file, 'r') as hdf5:
+        spectrum = hdf5.get('spectrum').value
+        wavenumber = hdf5.get('wavenumber').value
+        begin_wn = wavenumber[0]
+        end_wn = wavenumber[-1]
+        wn_interval = wavenumber[1] - wavenumber[0]
+
+        data = {
+            'SPECTRUM': spectrum,  # 光谱
+            'BEGIN_FREQUENCY': begin_wn,  # 开始频率
+            'END_FREQUENCY': end_wn,  # 结束频率
+            'FREQUENCY_INTERVAL': wn_interval,  # 频率间隔
+        }
+        return data
 
 
 def rad2tbb(rad, center_wave):
