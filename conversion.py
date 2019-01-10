@@ -13,7 +13,8 @@ LINEWIDTH = 0.5
 def lbl2other(spectrum_lbl, frequency_begin_lbl, frequency_end_lbl, frequency_interval_lbl,
               frequency_begin_other, frequency_end_other, frequency_interval_other,
               nyquist_other, opd_other, cos_filter_width,
-              apodization=None, conversion_name=None):
+              apodization=None, plot=False):
+    plot_data = dict()
     spec_lbl = spectrum_lbl
     fb_lbl = frequency_begin_lbl
     fe_lbl = frequency_end_lbl
@@ -23,11 +24,10 @@ def lbl2other(spectrum_lbl, frequency_begin_lbl, frequency_end_lbl, frequency_in
     fe_other = frequency_end_other
     fi_other = frequency_interval_other
 
-    # p0 原始光谱格栅到iasi的光谱网格上
-    if conversion_name is not None:
-        frequency_ = np.arange(0, len(spec_lbl), dtype=np.float64) * fi_lbl
-        plot_line(conversion_name + '_' + '00.png', frequency_,
-                  spec_lbl, lw=LINEWIDTH)
+    # p0 原始光谱
+    if plot:
+        plot_data['p0_x'] = np.arange(0, len(spec_lbl), dtype=np.float64) * fi_lbl
+        plot_data['p0_y'] = spec_lbl.copy()
 
     # ########## 做一条和LBL相同分辨率的光谱，频带宽度和other相同
     # totalnum=width(cm-1)/interval  加1.5是因为要做切趾计算
@@ -41,9 +41,9 @@ def lbl2other(spectrum_lbl, frequency_begin_lbl, frequency_end_lbl, frequency_in
 
     spectrum[is_b: is_e] = spec_lbl  # spec_lbl 放到光谱的对应位置
     # p1 原始光谱格栅到iasi的光谱网格上
-    if conversion_name is not None:
-        plot_line(conversion_name + '_' + '01.png', frequency[is_b - 100: is_e + 100],
-                  spectrum[is_b-100: is_e + 100], lw=LINEWIDTH)
+    if plot:
+        plot_data['p1_x'] = frequency.copy()
+        plot_data['p1_y'] = spectrum.copy()
 
     # ########## 使用 COS 滤波器 过滤两端的值  ####################
     n_filter = int(np.floor(cos_filter_width / fi_lbl + 1.5))  # 滤波的点数
@@ -63,9 +63,9 @@ def lbl2other(spectrum_lbl, frequency_begin_lbl, frequency_end_lbl, frequency_in
     spectrum[if_b2:if_e2] = spectrum[if_b2:if_e2] * bfilter
 
     # p2 cos 滤波之后
-    if conversion_name is not None:
-        plot_line(conversion_name + '_' + '02.png', frequency[is_b - 100: is_e + 100],
-                  spectrum[is_b-100: is_e + 100], lw=LINEWIDTH)
+    if plot:
+        plot_data['p2_x'] = frequency.copy()
+        plot_data['p2_y'] = spectrum.copy()
 
     # ########## 原光谱做成一个对称光谱
     # 前半部分同spc 后半部分去掉首末两点的reverse
@@ -75,9 +75,9 @@ def lbl2other(spectrum_lbl, frequency_begin_lbl, frequency_end_lbl, frequency_in
     spectrum_fft[n_spectrum:] = spectrum[-2:0:-1]  # 后半部分是spectrum去掉首末两点的倒置
 
     # p3 对称的光谱图
-    if conversion_name is not None:
-        frequency_fft = np.arange(0, n_ifg, dtype=np.float64) * fi_lbl
-        plot_line(conversion_name + '_' + '03.png', frequency_fft, spectrum_fft, lw=LINEWIDTH)
+    if plot:
+        plot_data['p3_x'] = np.arange(0, n_ifg, dtype=np.float64) * fi_lbl
+        plot_data['p3_y'] = spectrum_fft.copy()
 
     # ########## inverse fft 反傅里叶变换
     ifg_lbl = np.fft.fft(spectrum_fft) * fi_lbl
@@ -85,11 +85,11 @@ def lbl2other(spectrum_lbl, frequency_begin_lbl, frequency_end_lbl, frequency_in
     # 共n_ifg个点，13824000，是全部的干涉图，需要截取
 
     # p4 傅里叶转换后的干涉图
-    if conversion_name is not None:
-        n_spectrum_ifg = np.arange(0, n_ifg, dtype=np.float64) * fi_lbl
-        plot_line(conversion_name + '_' + '04.png', n_spectrum_ifg, ifg_lbl, lw=LINEWIDTH)
+    if plot:
+        plot_data['p4_x'] = np.arange(0, n_ifg, dtype=np.float64) * fi_lbl
+        plot_data['p4_y'] = ifg_lbl.real.copy()
 
-    # ########## compute delta OPD  截断光谱
+    # ########## compute delta OPD  截断干涉图
     max_x = 1. / (2.0 * fi_lbl)  # 500cm
     dx_other = max_x / (n_spectrum - 1)  # cm 7.2337963e-005  723.3796e-7 cm 723.3796nm
 
@@ -101,16 +101,18 @@ def lbl2other(spectrum_lbl, frequency_begin_lbl, frequency_end_lbl, frequency_in
     n_ifg_other = idx_trunc + 1
     x_other = np.arange(0, n_ifg_other, dtype=np.float64) * dx_other
 
-    # p5 截取后的iasi干涉图
-    if conversion_name is not None:
-        plot_line(conversion_name + '_' + '05.png', x_other, ifg_other, lw=LINEWIDTH)
+    # p5 截取后的干涉图
+    if plot:
+        plot_data['p5_x'] = np.arange(0, n_ifg_other, dtype=np.float64) * dx_other
+        plot_data['p5_y'] = ifg_other.real.copy()
 
     # ########## apply apodization
     ifg_other_ap = ifg_other * apodization(x_other)
 
     # p6 apodization
-    if conversion_name is not None:
-        plot_line(conversion_name + '_' + '06.png', x_other, ifg_other, lw=LINEWIDTH)
+    if plot:
+        plot_data['p6_x'] = np.arange(0, n_ifg_other, dtype=np.float64) * dx_other
+        plot_data['p6_y'] = ifg_other.real.copy()
 
     # ########## convert ifg to spectrum，做一个对称的光谱
     n_ifg_fft = 2 * (n_ifg_other - 1)  # 干涉图点数拓展
@@ -121,9 +123,9 @@ def lbl2other(spectrum_lbl, frequency_begin_lbl, frequency_end_lbl, frequency_in
     # 去掉最大值,和最末的值
 
     # p7 拓展干涉图的示意图
-    if conversion_name is not None:
-        x_iasi_fft = np.arange(0, n_ifg_fft, dtype=np.float64) * dx_other
-        plot_line(conversion_name + '_' + '07.png', x_iasi_fft, ifg_fft, lw=LINEWIDTH)
+    if plot:
+        plot_data['p7_x'] = np.arange(0, n_ifg_fft, dtype=np.float64) * dx_other
+        plot_data['p7_y'] = ifg_fft.real.copy()
 
     # ########## FFT 正变换
     spectrum_other_comp = np.fft.ifft(ifg_fft) * dx_other * n_ifg_fft  # FFT 正变换
@@ -139,18 +141,19 @@ def lbl2other(spectrum_lbl, frequency_begin_lbl, frequency_end_lbl, frequency_in
     wavenumber_other = fb_other + wavenumber_other * frequency_interval_other
 
     # p08 IASI 光谱
-    if conversion_name is not None:
-        plot_line(conversion_name + '_' + '08.png', wavenumber_other, spectrum_other,
-                  lw=LINEWIDTH)
+    if plot:
+        plot_data['p8_x'] = wavenumber_other
+        plot_data['p8_y'] = spectrum_other
 
-    return spectrum_other, wavenumber_other
+    return spectrum_other, wavenumber_other, plot_data
 
 
 def ori2other(spectrum_ori, frequency_begin_ori, frequency_end_ori, frequency_interval_ori,
               frequency_begin_other, frequency_end_other, frequency_interval_other,
               nyquist_other, opd_other, cos_filter_width,
-              apodization_ori=None, apodization_other=None, conversion_name=None,
+              apodization_ori=None, apodization_other=None, plot=False,
               ):
+    plot_data = dict()
     spec_ori = spectrum_ori
     fb_ori = frequency_begin_ori
     fe_ori = frequency_end_ori
@@ -159,6 +162,11 @@ def ori2other(spectrum_ori, frequency_begin_ori, frequency_end_ori, frequency_in
     fb_other = frequency_begin_other
     fe_other = frequency_end_other
     fi_other = frequency_interval_other
+
+    # p0 原始光谱
+    if plot:
+        plot_data['p0_x'] = np.arange(0, len(spec_ori), dtype=np.float64) * fi_ori
+        plot_data['p0_y'] = spec_ori.copy()
 
     # ########## 做一条和LBL相同分辨率的光谱，频带宽度和other相同
     # totalnum=width(cm-1)/interval  加1.5是因为要做切趾计算
@@ -172,8 +180,9 @@ def ori2other(spectrum_ori, frequency_begin_ori, frequency_end_ori, frequency_in
 
     spectrum[is_b: is_e] = spec_ori  # spec_ori 放到光谱的对应位置
     # p1 原始光谱格栅到iasi的光谱网格上
-    if conversion_name is not None:
-        plot_line(conversion_name + '_' + '01.png', frequency, spectrum, lw=LINEWIDTH)
+    if plot:
+        plot_data['p1_x'] = frequency.copy()
+        plot_data['p1_y'] = spectrum.copy()
 
     # ########## 使用 COS 滤波器 过滤两端的值 ，这步和LBL转other不同####################
     n_filter = int(np.floor(cos_filter_width / fi_ori + 1.5))  # 滤波的点数
@@ -193,8 +202,9 @@ def ori2other(spectrum_ori, frequency_begin_ori, frequency_end_ori, frequency_in
     spectrum[if_b2:if_e2] = spectrum[is_e] * bfilter
 
     # p2 cos 滤波之后
-    if conversion_name is not None:
-        plot_line(conversion_name + '_' + '02.png', frequency, spectrum, lw=LINEWIDTH)
+    if plot:
+        plot_data['p2_x'] = frequency.copy()
+        plot_data['p2_y'] = spectrum.copy()
 
     # ########## 原光谱做成一个对称光谱
     # 前半部分同spc 后半部分去掉首末两点的reverse
@@ -204,9 +214,9 @@ def ori2other(spectrum_ori, frequency_begin_ori, frequency_end_ori, frequency_in
     spectrum_fft[n_spectrum:] = spectrum[-2:0:-1]  # 后半部分是spectrum去掉首末两点的倒置
 
     # p3 对称的光谱图
-    if conversion_name is not None:
-        frequency_fft = np.arange(0, n_ifg, dtype=np.float64) * fi_ori
-        plot_line(conversion_name + '_' + '03.png', frequency_fft, spectrum_fft, lw=LINEWIDTH)
+    if plot:
+        plot_data['p3_x'] = np.arange(0, n_ifg, dtype=np.float64) * fi_ori
+        plot_data['p3_y'] = spectrum_fft.copy()
 
     # ########## inverse fft 反傅里叶变换
     ifg_ori = np.fft.fft(spectrum_fft) * fi_ori
@@ -214,9 +224,9 @@ def ori2other(spectrum_ori, frequency_begin_ori, frequency_end_ori, frequency_in
     # 共n_ifg个点，13824000，是全部的干涉图，需要截取
 
     # p4 傅里叶转换后的干涉图
-    if conversion_name is not None:
-        n_spectrum_ifg = np.arange(0, n_ifg, dtype=np.float64) * fi_ori
-        plot_line(conversion_name + '_' + '04.png', n_spectrum_ifg, ifg_ori, lw=LINEWIDTH)
+    if plot:
+        plot_data['p4_x'] = np.arange(0, n_ifg, dtype=np.float64) * fi_ori
+        plot_data['p4_y'] = ifg_ori.real.copy()
 
     # ########## compute delta OPD  截断光谱
     max_x = 1. / (2.0 * fi_ori)  # 500cm
@@ -231,16 +241,18 @@ def ori2other(spectrum_ori, frequency_begin_ori, frequency_end_ori, frequency_in
     x_other = np.arange(0, n_ifg_other, dtype=np.float64) * dx_other
 
     # p5 截取后的iasi干涉图
-    if conversion_name is not None:
-        plot_line(conversion_name + '_' + '05.png', x_other, ifg_other, lw=LINEWIDTH)
+    if plot:
+        plot_data['p5_x'] = np.arange(0, n_ifg_other, dtype=np.float64) * dx_other
+        plot_data['p5_y'] = ifg_other.real.copy()
 
     # ########## 移除原来的 apod，应用新的 apod
     ifg_ap = ifg_other / apodization_ori(x_other)
     ifg_other_ap = ifg_ap * apodization_other(x_other)
 
     # p6 apodization
-    if conversion_name is not None:
-        plot_line(conversion_name + '_' + '06.png', x_other, ifg_other, lw=LINEWIDTH)
+    if plot:
+        plot_data['p6_x'] = np.arange(0, n_ifg_other, dtype=np.float64) * dx_other
+        plot_data['p6_y'] = ifg_other.real.copy()
 
     # ########## convert ifg to spectrum，做一个对称的光谱
     n_ifg_fft = 2 * (n_ifg_other - 1)  # 干涉图点数拓展
@@ -251,9 +263,9 @@ def ori2other(spectrum_ori, frequency_begin_ori, frequency_end_ori, frequency_in
     # 去掉最大值,和最末的值
 
     # p7 拓展干涉图的示意图
-    if conversion_name is not None:
-        x_iasi_fft = np.arange(0, n_ifg_fft, dtype=np.float64) * dx_other
-        plot_line(conversion_name + '_' + '07.png', x_iasi_fft, ifg_fft, lw=LINEWIDTH)
+    if plot:
+        plot_data['p7_x'] = np.arange(0, n_ifg_fft, dtype=np.float64) * dx_other
+        plot_data['p7_y'] = ifg_fft.real.copy()
 
     # ########## FFT 正变换
     spectrum_other_comp = np.fft.ifft(ifg_fft) * dx_other * n_ifg_fft  # FFT 正变换
@@ -269,11 +281,11 @@ def ori2other(spectrum_ori, frequency_begin_ori, frequency_end_ori, frequency_in
     wavenumber_other = fb_other + wavenumber_other * frequency_interval_other
 
     # p08 IASI 光谱
-    if conversion_name is not None:
-        plot_line(conversion_name + '_' + '08.png', wavenumber_other, spectrum_other,
-                  lw=LINEWIDTH)
+    if plot:
+        plot_data['p8_x'] = wavenumber_other
+        plot_data['p8_y'] = spectrum_other
 
-    return spectrum_other, wavenumber_other
+    return spectrum_other, wavenumber_other, plot_data
 
 
 def plot_line(out_file, data1, data2=None, **kwargs):

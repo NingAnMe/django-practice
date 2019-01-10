@@ -12,7 +12,7 @@ import h5py
 from conversion import lbl2other, ori2other
 
 IBAND = [0, 1, 2]  # band 1、 2 or 3，光谱带
-LBL_DIR = 'D:/nsmc/LBL/data/'
+LBL_DIR = '/nas01/Data_anning/data/LBL/'
 
 # #########  仪器参数 #############
 FILTER_WIDTH = 20.0  # cm-1  # COS过滤器过滤的宽度
@@ -68,36 +68,38 @@ def main():
 
     iband = 0
 
+    plot = True
+
     # ################### Compute IASI spectrum #############
     conversion_name = 'pic/LBL2IASI_all'
-    spec_lbl2iasi, wavenumber_lbl2iasi = lbl2other(
+    spec_lbl2iasi, wavenumber_lbl2iasi, plot_data_lbl2iasi = lbl2other(
         rad_lbl, bf_lbl, ef_lbl, df_lbl,
         IASI_BAND_F1[iband], IASI_BAND_F2[iband], IASI_D_FREQUENCY[iband],
         IASI_F_NYQUIST, IASI_RESAMPLE_MAXX[iband], IASI_FILTER_WIDTH[iband],
-        iasi_apod, conversion_name=conversion_name,
+        iasi_apod, plot=plot,
     )
     print(wavenumber_lbl2iasi[0], wavenumber_lbl2iasi[-1])
     statistics_print(spec_lbl2iasi)
 
     # ################### Compute CrIS spectrum #############
     conversion_name = 'pic/LBL2CRIS_all'
-    spec_lbl2cris, wavenumber_lbl2cris = lbl2other(
+    spec_lbl2cris, wavenumber_lbl2cris, plot_data_lbl2cris = lbl2other(
         rad_lbl, bf_lbl, ef_lbl, df_lbl,
         CRIS_BAND_F1[iband], CRIS_BAND_F2[iband], CRIS_D_FREQUENCY[iband],
         CRIS_F_NYQUIST, CRIS_RESAMPLE_MAXX[iband], CRIS_FILTER_WIDTH[iband],
-        cris_apod, conversion_name=conversion_name
+        cris_apod, plot=plot,
     )
     print(wavenumber_lbl2cris[0], wavenumber_lbl2cris[-1])
     statistics_print(spec_lbl2cris)
 
     # ################### Compute IASI to CrIS spectrum #############
     conversion_name = 'pic/IASI2CRIS_all'
-    spec_iasi2cris, wavenumber_iasi2cris = ori2other(
+    spec_iasi2cris, wavenumber_iasi2cris, plot_data_iasi2cris = ori2other(
         spec_lbl2iasi, IASI_BAND_F1[iband], IASI_BAND_F2[iband], IASI_D_FREQUENCY[iband],
         CRIS_BAND_F1[iband], CRIS_BAND_F2[iband], CRIS_D_FREQUENCY[iband],
         CRIS_F_NYQUIST, CRIS_RESAMPLE_MAXX[iband], CRIS_FILTER_WIDTH[iband],
         apodization_ori=iasi_apod, apodization_other=cris_apod,
-        conversion_name=conversion_name,
+        plot=plot,
     )
     print(wavenumber_iasi2cris[0], wavenumber_iasi2cris[-1])
     statistics_print(spec_iasi2cris)
@@ -122,36 +124,38 @@ def main_one():
 
         rad_lbl = rad_lbl.reshape(-1) * 1.0e7
 
+        plot = True
+
         # ################### Compute IASI spectrum #############
         conversion_name = 'LBL2IASI_{}'.format(iband)
-        spec_lbl2iasi, wavenumber_lbl2iasi = lbl2other(
+        spec_lbl2iasi, wavenumber_lbl2iasi, plot_data_lbl2iasi = lbl2other(
             rad_lbl, bf_lbl, ef_lbl, df_lbl,
             IASI_BAND_F1[iband], IASI_BAND_F2[iband], IASI_D_FREQUENCY[iband],
             IASI_F_NYQUIST, IASI_RESAMPLE_MAXX[iband], IASI_FILTER_WIDTH[iband],
-            iasi_apod, conversion_name=conversion_name,
+            iasi_apod, plot=plot,
         )
         print(wavenumber_lbl2iasi[0], wavenumber_lbl2iasi[-1])
         statistics_print(spec_lbl2iasi)
 
         # ################### Compute CrIS spectrum #############
         conversion_name = 'LBL2CRIS_{}'.format(iband)
-        spec_lbl2cris, wavenumber_lbl2cris = lbl2other(
+        spec_lbl2cris, wavenumber_lbl2cris, plot_data_lbl2cris = lbl2other(
             rad_lbl, bf_lbl, ef_lbl, df_lbl,
             CRIS_BAND_F1[iband], CRIS_BAND_F2[iband], CRIS_D_FREQUENCY[iband],
             CRIS_F_NYQUIST, CRIS_RESAMPLE_MAXX[iband], CRIS_FILTER_WIDTH[iband],
-            cris_apod, conversion_name=conversion_name
+            cris_apod, plot=plot,
         )
         print(wavenumber_lbl2cris[0], wavenumber_lbl2cris[-1])
         statistics_print(spec_lbl2cris)
 
         # ################### Compute IASI to CrIS spectrum #############
         conversion_name = 'IASI2CRIS_{}'.format(iband)
-        spec_iasi2cris, wavenumber_iasi2cris = ori2other(
+        spec_iasi2cris, wavenumber_iasi2cris, plot_data_iasi2cris = ori2other(
             spec_lbl2iasi, IASI_BAND_F1[iband], IASI_BAND_F2[iband], IASI_D_FREQUENCY[iband],
             CRIS_BAND_F1[iband], CRIS_BAND_F2[iband], CRIS_D_FREQUENCY[iband],
             CRIS_F_NYQUIST, CRIS_RESAMPLE_MAXX[iband], CRIS_FILTER_WIDTH[iband],
             apodization_ori=iasi_apod, apodization_other=cris_apod,
-            conversion_name=conversion_name,
+            plot=plot,
         )
         print(wavenumber_iasi2cris[0], wavenumber_iasi2cris[-1])
         statistics_print(spec_iasi2cris)
