@@ -6,8 +6,8 @@
 """
 import matplotlib.pyplot as plt
 import numpy as np
-
-LINEWIDTH = 0.5
+from netCDF4 import Dataset
+import h5py
 
 
 def lbl2other(spectrum_lbl, frequency_begin_lbl, frequency_end_lbl, frequency_interval_lbl,
@@ -286,34 +286,3 @@ def ori2other(spectrum_ori, frequency_begin_ori, frequency_end_ori, frequency_in
         plot_data['p8_y'] = spectrum_other
 
     return spectrum_other, wavenumber_other, plot_data
-
-
-def plot_line(out_file, data1, data2=None, **kwargs):
-    fig_size = (6.4, 4.8)
-    dpi = 100
-    fig = plt.figure(figsize=fig_size, dpi=dpi)
-    ax1 = plt.subplot2grid((1, 1), (0, 0))
-    if data2 is None:
-        ax1.plot(data1, **kwargs)
-    else:
-        ax1.plot(data1, data2, **kwargs)
-    fig.savefig(out_file, dpi=100)
-    fig.clear()
-    plt.close()
-    print('>>> {}'.format(out_file))
-
-
-def plot_scatter(out_file, data1, data2=None, **kwargs):
-    fig_size = (6.4, 4.8)
-    dpi = 100
-    fig = plt.figure(figsize=fig_size, dpi=dpi)
-    ax1 = plt.subplot2grid((1, 1), (0, 0))
-    if data2 is None:
-        ax1.scatter(data1, **kwargs)
-    else:
-        ax1.scatter(data1, data2, **kwargs)
-    ax1.set_ylim(-3, 3)
-    fig.savefig(out_file, dpi=100)
-    fig.clear()
-    plt.close()
-    print('>>> {}'.format(out_file))
