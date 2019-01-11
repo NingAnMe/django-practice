@@ -76,7 +76,7 @@ def main():
     )
     print(wavenumber_lbl2iasi[0], wavenumber_lbl2iasi[-1])
     statistics_print(spec_lbl2iasi)
-    plot_picture(plot_data_lbl2iasi, conversion_name)
+    plot_conversion_picture(plot_data_lbl2iasi, conversion_name)
 
     # ################### Compute CrIS spectrum #############
     conversion_name = 'pic/LBL2CRIS_all'
@@ -88,7 +88,7 @@ def main():
     )
     print(wavenumber_lbl2cris[0], wavenumber_lbl2cris[-1])
     statistics_print(spec_lbl2cris)
-    plot_picture(plot_data_lbl2cris, conversion_name)
+    plot_conversion_picture(plot_data_lbl2cris, conversion_name)
 
     # ################### Compute IASI to CrIS spectrum #############
     conversion_name = 'pic/IASI2CRIS_all'
@@ -101,7 +101,7 @@ def main():
     )
     print(wavenumber_iasi2cris[0], wavenumber_iasi2cris[-1])
     statistics_print(spec_iasi2cris)
-    plot_picture(plot_data_iasi2cris, conversion_name)
+    plot_conversion_picture(plot_data_iasi2cris, conversion_name)
 
     spec_bias = spec_iasi2cris - spec_lbl2cris
     plot_kwargs = {'s': 0.1}

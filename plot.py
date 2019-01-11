@@ -55,7 +55,7 @@ def plot_line(x, y, out_file, format_kwargs=None, ):
     print('>>> {}'.format(out_file))
 
 
-def plot_picture(plot_data, name):
+def plot_conversion_picture(plot_data, name):
     format_kwargs = {
         'x_axis_min': 0,
         'x_axis_max': 3000,
