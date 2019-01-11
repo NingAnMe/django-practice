@@ -3,14 +3,12 @@
 """
 @Time    : 2018/12/20
 """
-import os
-
 from conversion import *
 from plot import *
 from util import *
 
 IBAND = [0, 1, 2]  # band 1、 2 or 3，光谱带
-LBL_DIR = '/nas01/Data_anning/data/LBL/'
+LBL_DIR = r'D:\nsmc\LBL\data'
 
 # #########  仪器参数 #############
 FILTER_WIDTH = 20.0  # cm-1  # COS过滤器过滤的宽度
@@ -106,8 +104,21 @@ def main():
     plot_picture(plot_data_iasi2cris, conversion_name)
 
     spec_bias = spec_iasi2cris - spec_lbl2cris
-    kwargs = {'s': 0.1}
-    plot_scatter('pic/IASI2CRIS_all_bias.png', wavenumber_iasi2cris, spec_bias, **kwargs)
+    plot_kwargs = {'s': 0.1}
+    format_kwargs = {
+        'x_axis_min': 0,
+        'x_axis_max': 3000,
+        'x_interval': 500,
+        'x_label': 'Frequency($cm^{-1}$)',
+
+        'y_axis_min': -3,
+        'y_axis_max': 3,
+        'y_interval': 1,
+        'y_label': 'Radiance Bias'
+
+    }
+    plot_scatter(wavenumber_iasi2cris, spec_bias, 'pic/IASI2CRIS_all_bias.png',
+                 format_kwargs=format_kwargs, plot_kwargs=plot_kwargs)
 
 
 if __name__ == '__main__':

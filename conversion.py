@@ -4,10 +4,7 @@
 @Time    : 2019/1/3
 @Author  : AnNing
 """
-import matplotlib.pyplot as plt
 import numpy as np
-from netCDF4 import Dataset
-import h5py
 
 
 def lbl2other(spectrum_lbl, frequency_begin_lbl, frequency_end_lbl, frequency_interval_lbl,
@@ -26,7 +23,7 @@ def lbl2other(spectrum_lbl, frequency_begin_lbl, frequency_end_lbl, frequency_in
 
     # p0 原始光谱
     if plot:
-        plot_data['p0_x'] = np.arange(0, len(spec_lbl), dtype=np.float64) * fi_lbl
+        plot_data['p0_x'] = np.arange(0, len(spec_lbl), dtype=np.float64) * fi_lbl + fb_lbl
         plot_data['p0_y'] = spec_lbl.copy()
 
     # ########## 做一条和LBL相同分辨率的光谱，频带宽度和other相同
@@ -165,7 +162,7 @@ def ori2other(spectrum_ori, frequency_begin_ori, frequency_end_ori, frequency_in
 
     # p0 原始光谱
     if plot:
-        plot_data['p0_x'] = np.arange(0, len(spec_ori), dtype=np.float64) * fi_ori
+        plot_data['p0_x'] = np.arange(0, len(spec_ori), dtype=np.float64) * fi_ori + fb_ori
         plot_data['p0_y'] = spec_ori.copy()
 
     # ########## 做一条和LBL相同分辨率的光谱，频带宽度和other相同
