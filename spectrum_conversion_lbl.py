@@ -16,7 +16,7 @@ FILTER_WIDTH = 20.0  # cm-1  # COS过滤器过滤的宽度
 IASI_F_NYQUIST = 6912.0  # 频带宽度  cm-1
 IASI_RESAMPLE_MAXX = [2.0, ]  # cm OPD
 IASI_D_FREQUENCY = [0.25, ]  # v cm-1  光谱分辨率
-IASI_BAND_F1 = [645.00, ]  # 光谱带开始
+IASI_BAND_F1 = [645.25, ]  # 光谱带开始
 IASI_BAND_F2 = [2760.25, ]  # 光谱带结束
 IASI_FILTER_WIDTH = [20.0, ]
 
