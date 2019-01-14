@@ -22,18 +22,23 @@ def plot_scatter(x, y, out_file, format_kwargs=None, plot_kwargs=None):
 
     plot_ax = PlotAx()
     ax1 = plt.subplot2grid((1, 1), (0, 0))
+    if plot_kwargs is None:
+        plot_kwargs = dict()
     ax1.scatter(x, y, **plot_kwargs)
 
     # ##### 格式化图片
     plot_ax.format_ax(ax1, **format_kwargs)
     plt.tight_layout()
+    # ##### 保存图片
     fig.savefig(out_file, dpi=100)
     fig.clear()
     plt.close()
     print('>>> {}'.format(out_file))
 
 
-def plot_line(x, y, out_file, format_kwargs=None, ):
+def plot_line(x, y, out_file, format_kwargs=None, plot_kwargs=None):
+    if format_kwargs is None:
+        format_kwargs = {}
     style_path = STYLE_PATH
     style_file = os.path.join(style_path, 'plot_regression.mplstyle')
     plt.style.use(style_file)
@@ -43,12 +48,16 @@ def plot_line(x, y, out_file, format_kwargs=None, ):
 
     plot_ax = PlotAx()
     ax1 = plt.subplot2grid((1, 1), (0, 0))
-    ax1.plot(x, y)
+    if plot_kwargs is None:
+        plot_kwargs = dict()
+    ax1.plot(x, y, **plot_kwargs)
 
     # ##### 格式化图片
+    if format_kwargs is None:
+        format_kwargs = dict()
     plot_ax.format_ax(ax1, **format_kwargs)
-
     plt.tight_layout()
+    # ##### 保存图片
     fig.savefig(out_file, dpi=100)
     fig.clear()
     plt.close()
@@ -60,12 +69,12 @@ def plot_conversion_picture(plot_data, name):
         'x_axis_min': 0,
         'x_axis_max': 3000,
         'x_interval': 500,
-        'x_label': 'Frequency($cm^{-1}$)',
+        'x_label': 'Wavenumber($cm^{-1}$)',
 
         'y_axis_min': 0,
         'y_axis_max': 150,
         'y_interval': 30,
-        'y_label': 'Radiance'
+        'y_label': 'Radiance($mw/m^2/sr/cm^{-1}$)'
 
     }
     out_file = name + '_p0.png'
@@ -75,12 +84,12 @@ def plot_conversion_picture(plot_data, name):
         'x_axis_min': 0,
         'x_axis_max': 7000,
         'x_interval': 500,
-        'x_label': 'Frequency($cm^{-1}$)',
+        'x_label': 'Wavenumber($cm^{-1}$)',
 
         'y_axis_min': 0,
         'y_axis_max': 150,
         'y_interval': 30,
-        'y_label': 'Radiance'
+        'y_label': 'Radiance($mw/m^2/sr/cm^{-1}$)'
 
     }
     out_file = name + '_p1.png'
@@ -90,12 +99,12 @@ def plot_conversion_picture(plot_data, name):
         'x_axis_min': 600,
         'x_axis_max': 800,
         'x_interval': 50,
-        'x_label': 'Frequency($cm^{-1}$)',
+        'x_label': 'Wavenumber($cm^{-1}$)',
 
         'y_axis_min': 0,
         'y_axis_max': 150,
         'y_interval': 30,
-        'y_label': 'Radiance'
+        'y_label': 'Radiance($mw/m^2/sr/cm^{-1}$)'
 
     }
     out_file = name + '_p11.png'
@@ -105,12 +114,12 @@ def plot_conversion_picture(plot_data, name):
         'x_axis_min': 0,
         'x_axis_max': 7000,
         'x_interval': 500,
-        'x_label': 'Frequency($cm^{-1}$)',
+        'x_label': 'Wavenumber($cm^{-1}$)',
 
         'y_axis_min': 0,
         'y_axis_max': 150,
         'y_interval': 30,
-        'y_label': 'Radiance'
+        'y_label': 'Radiance($mw/m^2/sr/cm^{-1}$)'
 
     }
     out_file = name + '_p2.png'
@@ -120,12 +129,12 @@ def plot_conversion_picture(plot_data, name):
         'x_axis_min': 600,
         'x_axis_max': 800,
         'x_interval': 50,
-        'x_label': 'Frequency($cm^{-1}$)',
+        'x_label': 'Wavenumber($cm^{-1}$)',
 
         'y_axis_min': 0,
         'y_axis_max': 150,
         'y_interval': 30,
-        'y_label': 'Radiance'
+        'y_label': 'Radiance($mw/m^2/sr/cm^{-1}$)'
 
     }
     out_file = name + '_p22.png'
@@ -135,12 +144,12 @@ def plot_conversion_picture(plot_data, name):
         'x_axis_min': 0,
         'x_axis_max': 14000,
         'x_interval': 2000,
-        'x_label': 'Frequency($cm^{-1}$)',
+        'x_label': 'Wavenumber($cm^{-1}$)',
 
         'y_axis_min': 0,
         'y_axis_max': 150,
         'y_interval': 30,
-        'y_label': 'Radiance'
+        'y_label': 'Radiance($mw/m^2/sr/cm^{-1}$)'
 
     }
     out_file = name + '_p3.png'
@@ -208,13 +217,13 @@ def plot_conversion_picture(plot_data, name):
     format_kwargs = {
         'x_axis_min': 0,
         'x_axis_max': 3000,
-        'x_interval': 2000,
-        'x_label': 'Frequency($cm^{-1}$)',
+        'x_interval': 500,
+        'x_label': 'Wavenumber($cm^{-1}$)',
 
         'y_axis_min': 0,
         'y_axis_max': 150,
         'y_interval': 30,
-        'y_label': 'Radiance'
+        'y_label': 'Radiance($mw/m^2/sr/cm^{-1}$)'
 
     }
     out_file = name + '_p8.png'

@@ -17,14 +17,14 @@ IASI_F_NYQUIST = 6912.0  # 频带宽度  cm-1
 IASI_RESAMPLE_MAXX = [2.0, ]  # cm OPD
 IASI_D_FREQUENCY = [0.25, ]  # v cm-1  光谱分辨率
 IASI_BAND_F1 = [645.00, ]  # 光谱带开始
-IASI_BAND_F2 = [2760.75, ]  # 光谱带结束
+IASI_BAND_F2 = [2760.25, ]  # 光谱带结束
 IASI_FILTER_WIDTH = [20.0, ]
 
 CRIS_F_NYQUIST = 5875.0
 CRIS_RESAMPLE_MAXX = [0.8, ]
 CRIS_D_FREQUENCY = [0.625, ]
-CRIS_BAND_F1 = [645.00, ]
-CRIS_BAND_F2 = [2760.75, ]
+CRIS_BAND_F1 = [650.00, ]
+CRIS_BAND_F2 = [2755.00, ]
 CRIS_FILTER_WIDTH = [20.0, ]
 
 # IASI_F_NYQUIST = 6912.0  # 频带宽度  cm-1
@@ -109,12 +109,12 @@ def main():
         'x_axis_min': 0,
         'x_axis_max': 3000,
         'x_interval': 500,
-        'x_label': 'Frequency($cm^{-1}$)',
+        'x_label': 'Wavenumber($cm^{-1}$)',
 
         'y_axis_min': -3,
         'y_axis_max': 3,
         'y_interval': 1,
-        'y_label': 'Radiance Bias'
+        'y_label': 'Radiance Bias($mw/m^2/sr/cm^{-1}$)'
 
     }
     plot_scatter(wavenumber_iasi2cris, spec_bias, 'pic/IASI2CRIS_all_bias.png',
