@@ -67,7 +67,10 @@ def main():
     plot = True
 
     # ################### Compute IASI spectrum #############
-    conversion_name = 'pic/LBL2IASI_all'
+    if not os.path.isdir('pic_lbl'):
+        os.mkdir('pic_lbl')
+
+    conversion_name = 'pic_lbl/LBL2IASI_all'
     spec_lbl2iasi, wavenumber_lbl2iasi, plot_data_lbl2iasi = lbl2other(
         rad_lbl, bf_lbl, ef_lbl, df_lbl,
         IASI_BAND_F1[iband], IASI_BAND_F2[iband], IASI_D_FREQUENCY[iband],
@@ -79,7 +82,7 @@ def main():
     plot_conversion_picture(plot_data_lbl2iasi, conversion_name)
 
     # ################### Compute CrIS spectrum #############
-    conversion_name = 'pic/LBL2CRIS_all'
+    conversion_name = 'pic_lbl/LBL2CRIS_all'
     spec_lbl2cris, wavenumber_lbl2cris, plot_data_lbl2cris = lbl2other(
         rad_lbl, bf_lbl, ef_lbl, df_lbl,
         CRIS_BAND_F1[iband], CRIS_BAND_F2[iband], CRIS_D_FREQUENCY[iband],
@@ -91,7 +94,7 @@ def main():
     plot_conversion_picture(plot_data_lbl2cris, conversion_name)
 
     # ################### Compute IASI to CrIS spectrum #############
-    conversion_name = 'pic/IASI2CRIS_all'
+    conversion_name = 'pic_lbl/IASI2CRIS_all'
     spec_iasi2cris, wavenumber_iasi2cris, plot_data_iasi2cris = ori2other(
         spec_lbl2iasi, IASI_BAND_F1[iband], IASI_BAND_F2[iband], IASI_D_FREQUENCY[iband],
         CRIS_BAND_F1[iband], CRIS_BAND_F2[iband], CRIS_D_FREQUENCY[iband],
@@ -117,7 +120,7 @@ def main():
         'y_label': 'Radiance Bias($mw/m^2/sr/cm^{-1}$)'
 
     }
-    plot_scatter(wavenumber_iasi2cris, spec_bias, 'pic/IASI2CRIS_all_bias.png',
+    plot_scatter(wavenumber_iasi2cris, spec_bias, 'pic_lbl/IASI2CRIS_all_bias.png',
                  format_kwargs=format_kwargs, plot_kwargs=plot_kwargs)
 
 
