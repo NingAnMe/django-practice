@@ -3,7 +3,7 @@
 """
 @Time    : 2018/12/20
 """
-from conversion import *
+from spectrum_conversion import *
 from plot import *
 from util import *
 

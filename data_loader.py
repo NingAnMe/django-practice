@@ -80,6 +80,20 @@ class LoaderIasiL1:
         return wavenumber
 
 
+class LoaderCrisFull:
+    def __init__(self, in_file):
+        self.in_file = in_file
+
+    def get_spectrum_radiance(self):
+        with h5py.File(self.in_file, 'r') as h5r:
+            data = h5r.get('spectrum_radiance').value
+        return data
+
+    def get_spectrum_wavenumber(self):
+        with h5py.File(self.in_file, 'r') as h5r:
+            data = h5r.get('spectrum_wavenumber').value
+        return data
+
 def plot_cris(in_file, out_file, format_kwargs=None, plot_kwargs=None):
     loader = LoaderCrisL1(in_file)
     wavenumbers = loader.get_spectrum_wavenumber()

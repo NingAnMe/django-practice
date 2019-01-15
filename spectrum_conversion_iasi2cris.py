@@ -4,7 +4,7 @@
 @Time    : 2018/12/20
 """
 import sys
-from conversion import *
+from spectrum_conversion import *
 from util import *
 from data_loader import *
 from hdf5 import write_hdf5_and_compress
