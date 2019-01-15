@@ -9,6 +9,7 @@ import os
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
+import harp
 
 from plot import STYLE_PATH, PlotAx
 
@@ -60,6 +61,23 @@ class LoaderCrisL1:
 
     def get_spectrum_response_wavenumber(self):
         pass
+
+
+class LoaderIasiL1:
+    def __init__(self, in_file):
+        self.in_file = in_file
+
+    def get_spectrum_response(self):
+        product = harp.import_product(self.in_file)
+        response = product.wavenumber_radiance.data * 1e5
+        del product
+        return response
+
+    def get_wavenumber(self):
+        product = harp.import_product(self.in_file)
+        wavenumber = product.wavenumber.data / 1e2
+        del product
+        return wavenumber
 
 
 def plot_cris(in_file, out_file, format_kwargs=None, plot_kwargs=None):

@@ -142,7 +142,7 @@ def plot_conversion_picture(plot_data, name):
 
     format_kwargs = {
         'x_axis_min': 0,
-        'x_axis_max': 14000,
+        'x_axis_max': 12000,
         'x_interval': 2000,
         'x_label': 'Wavenumber($cm^{-1}$)',
 
@@ -157,10 +157,13 @@ def plot_conversion_picture(plot_data, name):
 
     format_kwargs = {
         'x_axis_min': -1000,
-        'x_axis_max': 14000,
+        'x_axis_max': 13000,
         'x_interval': 3000,
         'x_label': 'Mirror position($cm$)',
 
+        'y_axis_min': -60000,
+        'y_axis_max': 80000,
+        'y_interval': 20000,
         'y_label': 'Light measured by detector',
     }
     out_file = name + '_p4.png'
@@ -168,7 +171,7 @@ def plot_conversion_picture(plot_data, name):
 
     format_kwargs = {
         'x_axis_min': -1000,
-        'x_axis_max': 14000,
+        'x_axis_max': 13000,
         'x_interval': 3000,
         'x_label': 'Mirror position($cm$)',
 
@@ -182,30 +185,64 @@ def plot_conversion_picture(plot_data, name):
     plot_line(plot_data['p4_x'], plot_data['p4_y'], out_file, format_kwargs=format_kwargs)
 
     format_kwargs = {
-        'x_axis_min': -0.5,
-        'x_axis_max': 2.5,
-        'x_interval': 0.5,
+        'x_axis_min': -0.2,
+        'x_axis_max': 1.0,
+        'x_interval': 0.2,
         'x_label': 'Mirror position($cm$)',
 
+        'y_axis_min': -60000,
+        'y_axis_max': 80000,
+        'y_interval': 20000,
         'y_label': 'Light measured by detector',
     }
     out_file = name + '_p5.png'
     plot_line(plot_data['p5_x'], plot_data['p5_y'], out_file, format_kwargs=format_kwargs)
 
     format_kwargs = {
-        'x_axis_min': -0.5,
-        'x_axis_max': 2.5,
-        'x_interval': 0.5,
+        'x_axis_min': -0.2,
+        'x_axis_max': 1.0,
+        'x_interval': 0.2,
         'x_label': 'Mirror position($cm$)',
 
+        'y_axis_min': -500,
+        'y_axis_max': 500,
+        'y_interval': 200,
+        'y_label': 'Light measured by detector',
+    }
+    out_file = name + '_p51.png'
+    plot_line(plot_data['p5_x'], plot_data['p5_y'], out_file, format_kwargs=format_kwargs)
+
+    format_kwargs = {
+        'x_axis_min': -0.2,
+        'x_axis_max': 1.0,
+        'x_interval': 0.2,
+        'x_label': 'Mirror position($cm$)',
+
+        'y_axis_min': -60000,
+        'y_axis_max': 80000,
+        'y_interval': 20000,
         'y_label': 'Light measured by detector',
     }
     out_file = name + '_p6.png'
     plot_line(plot_data['p6_x'], plot_data['p6_y'], out_file, format_kwargs=format_kwargs)
 
     format_kwargs = {
+        'x_axis_min': -0.2,
+        'x_axis_max': 1.0,
+        'x_interval': 0.2,
+        'x_label': 'Mirror position($cm$)',
+
+        'y_axis_min': -500,
+        'y_axis_max': 500,
+        'y_interval': 200,
+        'y_label': 'Light measured by detector',
+    }
+    out_file = name + '_p61.png'
+    plot_line(plot_data['p6_x'], plot_data['p6_y'], out_file, format_kwargs=format_kwargs)
+
+    format_kwargs = {
         'x_axis_min': -0.5,
-        'x_axis_max': 5.0,
+        'x_axis_max': 2.0,
         'x_interval': 0.5,
         'x_label': 'Mirror position($cm$)',
 
