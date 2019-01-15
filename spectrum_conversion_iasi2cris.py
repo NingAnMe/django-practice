@@ -3,12 +3,13 @@
 """
 @Time    : 2018/12/20
 """
+import sys
 from conversion import *
-from plot import *
 from util import *
+from data_loader import *
+from hdf5 import write_hdf5_and_compress
 
 IBAND = [0, ]  # band 1、 2 or 3，光谱带
-LBL_DIR = r'D:\nsmc\gap_filling_data'
 
 # #########  仪器参数 #############
 
@@ -48,44 +49,75 @@ CRIS_FILTER_WIDTH = [20.0, ]
 # HIRAS_FILTER_WIDTH = [20.0, 24.0, 20.0]
 
 
-def main():
-    iasi_file = os.path.join(LBL_DIR, 'iasi_20180104.h5')
-    with h5py.File(iasi_file, 'r') as h5r:
-        responses = h5r.get('wavenumber_radiance').value * 10 ** 5
+def main(dir_in, dir_out):
+    """
+    :param dir_in: 输入目录路径
+    :param dir_out:  输出目录路径
+    :return:
+    """
+    in_files = os.listdir(dir_in)
 
-    spec_iasi = responses[0][0:8461]
+    for in_file in in_files:
+        in_file = os.path.join(dir_in, in_file)
+        print('<<< {}'.format(in_file))
+        out_filename = os.path.basename(in_file)
+        out_file = os.path.join(dir_out, out_filename)
+        iasi2cris(in_file, out_file)
 
+
+def iasi2cris(in_file, out_file):
+    """
+    :param in_file: IASI L1原始数据绝对路径，全光谱分辨率
+    :param out_file: CRIS 数据绝对路径
+    :return:
+    """
+    loader_iasi = LoaderIasiL1(in_file)
+    radiances = loader_iasi.get_spectrum_radiance()
     iband = 0
 
-    plot = True
+    result_out = dict()
 
-    # ################### Compute IASI to CrIS spectrum #############
-    conversion_name = 'pic/IASI2CRIS_all'
-    spec_iasi2cris, wavenumber_iasi2cris, plot_data_iasi2cris = ori2other(
-        spec_iasi, IASI_BAND_F1[iband], IASI_BAND_F2[iband], IASI_D_FREQUENCY[iband],
-        CRIS_BAND_F1[iband], CRIS_BAND_F2[iband], CRIS_D_FREQUENCY[iband],
-        CRIS_F_NYQUIST, CRIS_RESAMPLE_MAXX[iband], CRIS_FILTER_WIDTH[iband],
-        apodization_ori=iasi_apod, apodization_other=cris_apod,
-        plot=plot,
-    )
-    print(wavenumber_iasi2cris[0], wavenumber_iasi2cris[-1])
-    statistics_print(spec_iasi2cris)
-    plot_conversion_picture(plot_data_iasi2cris, conversion_name)
+    for radiance in radiances:
+        radiance = radiance[:8461]  # 后面都是无效值
 
+        spec_iasi2cris, wavenumber_iasi2cris, plot_data_iasi2cris = ori2other(
+            radiance, IASI_BAND_F1[iband], IASI_BAND_F2[iband], IASI_D_FREQUENCY[iband],
+            CRIS_BAND_F1[iband], CRIS_BAND_F2[iband], CRIS_D_FREQUENCY[iband],
+            CRIS_F_NYQUIST, CRIS_RESAMPLE_MAXX[iband], CRIS_FILTER_WIDTH[iband],
+            apodization_ori=iasi_apod, apodization_other=cris_apod,
+        )
+        spec_iasi2cris = spec_iasi2cris.reshape(1, -1)
 
-# def iasi2cris(in_file, out_file):
-#     conversion_name = 'pic/IASI2CRIS_all'
-#     spec_iasi2cris, wavenumber_iasi2cris, plot_data_iasi2cris = ori2other(
-#         spec_lbl2iasi, IASI_BAND_F1[iband], IASI_BAND_F2[iband], IASI_D_FREQUENCY[iband],
-#         CRIS_BAND_F1[iband], CRIS_BAND_F2[iband], CRIS_D_FREQUENCY[iband],
-#         CRIS_F_NYQUIST, CRIS_RESAMPLE_MAXX[iband], CRIS_FILTER_WIDTH[iband],
-#         apodization_ori=iasi_apod, apodization_other=cris_apod,
-#         plot=plot,
-#     )
-#     print(wavenumber_iasi2cris[0], wavenumber_iasi2cris[-1])
-#     statistics_print(spec_iasi2cris)
-#     plot_conversion_picture(plot_data_iasi2cris, conversion_name)
+        if 'spectrum_radiance' not in result_out:
+            result_out['spectrum_radiance'] = spec_iasi2cris
+        else:
+            concatenate = (result_out['spectrum_radiance'], spec_iasi2cris)
+            result_out['spectrum_radiance'] = np.concatenate(concatenate, axis=0)
+
+        if 'spectrum_wavenumber' not in result_out:
+            result_out['spectrum_wavenumber'] = wavenumber_iasi2cris.reshape(-1,)
+
+    write_hdf5_and_compress(out_file, result_out)
 
 
-if __name__ == '__main__':
-    main()
+# ######################## 带参数的程序入口 ##############################
+if __name__ == "__main__":
+    # 获取程序参数接口
+    ARGS = sys.argv[1:]
+    HELP_INFO = \
+        u"""
+        [arg1]：dir_in
+        [arg2]：dir_out
+        [example]： python app.py arg1 arg2
+        """
+    if "-h" in ARGS:
+        print(HELP_INFO)
+        sys.exit(-1)
+
+    if len(ARGS) != 1:
+        print(HELP_INFO)
+        sys.exit(-1)
+    else:
+        ARG1 = ARGS[0]
+        ARG2 = ARGS[1]
+        main(ARG1, ARG2)

@@ -21,7 +21,7 @@ class LoaderCrisL1:
     def get_radiance(self):
         pass
 
-    def get_spectrum_response(self):
+    def get_spectrum_radiance(self):
         with h5py.File(self.in_file, 'r') as h5r:
             sds_name = '/All_Data/CrIS-FS-SDR_All/ES_RealLW'
             sr_lw = h5r.get(sds_name).value
@@ -53,7 +53,7 @@ class LoaderCrisL1:
         return sr_lw, sr_mw, sr_sw
 
     @staticmethod
-    def get_wavenumber():
+    def get_spectrum_wavenumber():
         wavenumber_lw = np.arange(650., 1095.0 + 0.625, 0.625)
         wavenumber_mw = np.arange(1210.0, 1750 + 0.625, 0.625)
         wavenumber_sw = np.arange(2155.0, 2550.0 + 0.625, 0.625)
@@ -67,13 +67,13 @@ class LoaderIasiL1:
     def __init__(self, in_file):
         self.in_file = in_file
 
-    def get_spectrum_response(self):
+    def get_spectrum_radiance(self):
         product = harp.import_product(self.in_file)
         response = product.wavenumber_radiance.data * 1e5
         del product
         return response
 
-    def get_wavenumber(self):
+    def get_spectrum_wavenumber(self):
         product = harp.import_product(self.in_file)
         wavenumber = product.wavenumber.data / 1e2
         del product
@@ -82,8 +82,8 @@ class LoaderIasiL1:
 
 def plot_cris(in_file, out_file, format_kwargs=None, plot_kwargs=None):
     loader = LoaderCrisL1(in_file)
-    wavenumbers = loader.get_wavenumber()
-    responses = loader.get_spectrum_response()
+    wavenumbers = loader.get_spectrum_wavenumber()
+    responses = loader.get_spectrum_radiance()
 
     if format_kwargs is None:
         format_kwargs = {}
