@@ -98,12 +98,14 @@ def read_lbl_hdf5(in_file):
         return data
 
 
-def get_cris_full_train_data(in_files, count=None):
+def get_cris_full_train_data(in_files, x_ranges=None, y_ranges=None, count=None):
     """
     返回训练数据
-    :param in_files: 输入文件
-    :param count: 返回训练数据的数量
-    :return: pd.DataFrame
+    :param in_files: 读取数据文件的列表
+    :param x_ranges: X 的光谱范围
+    :param y_ranges: Y 的光谱范围
+    :param count: 读取光谱的数量
+    :return:
     """
     data_all = None
     wavenumber = None
@@ -122,7 +124,8 @@ def get_cris_full_train_data(in_files, count=None):
                 wavenumber = hdf5_r.get('spectrum_wavenumber').value
 
     x = list()
-    x_ranges = [(650., 1095), (1210., 1750.), (2155., 2550.)]
+    if x_ranges is None:
+        x_ranges = [(650., 1095), (1210., 1750.), (2155., 2550.)]
     for start, end in x_ranges:
         index_start = int(np.where(wavenumber == start)[0])
         index_end = int(np.where(wavenumber == end)[0])
@@ -131,7 +134,8 @@ def get_cris_full_train_data(in_files, count=None):
         else:
             x = np.concatenate((x, data_all[:, index_start:index_end+1]), axis=1)
     y = list()
-    y_ranges = [(1095., 1210), (1750., 2155.), (2550., 2755.)]
+    if y_ranges is None:
+        y_ranges = [(1095., 1210), (1750., 2155.), (2550., 2755.)]
     for start, end in y_ranges:
         index_start = int(np.where(wavenumber == start)[0])
         index_end = int(np.where(wavenumber == end)[0])
