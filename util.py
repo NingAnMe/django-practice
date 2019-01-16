@@ -5,6 +5,7 @@
 @Author  : AnNing
 """
 import numpy as np
+import pandas as pd
 from netCDF4 import Dataset
 import h5py
 
@@ -43,7 +44,21 @@ def cris_apod(x, opd=0.8):
     return result
 
 
-def read_nc(in_file):
+def rad2tbb(radiance, center_wave):
+    """
+    辐射率转亮温
+    :param radiance: 辐射率
+    :param center_wave: 中心波数
+    :return: 亮温
+    """
+    c1 = 1.1910427e-5
+    c2 = 1.4387752
+
+    tbb = (c2 * center_wave) / np.log(1 + ((c1 * center_wave ** 3) / radiance))
+    return tbb
+
+
+def read_lbl_nc(in_file):
     """
     读取 LBL 文件
     :param in_file: 文件绝对路径
@@ -66,7 +81,7 @@ def read_nc(in_file):
     return data
 
 
-def read_hdf5(in_file):
+def read_lbl_hdf5(in_file):
     with h5py.File(in_file, 'r') as hdf5:
         spectrum = hdf5.get('spectrum').value
         wavenumber = hdf5.get('wavenumber').value
@@ -83,15 +98,56 @@ def read_hdf5(in_file):
         return data
 
 
-def rad2tbb(rad, center_wave):
+def get_cris_full_train_data(in_files, count=None):
     """
-    辐射率转亮温
-    :param rad: 辐射率
-    :param center_wave: 中心波数
-    :return: 亮温
+    返回训练数据
+    :param in_files: 输入文件
+    :param count: 返回训练数据的数量
+    :return: pd.DataFrame
     """
-    c1 = 1.1910427e-5
-    c2 = 1.4387752
+    data_all = None
+    wavenumber = None
+    for in_file in in_files:
+        with h5py.File(in_file, 'r') as hdf5_r:
+            data = hdf5_r.get('spectrum_radiance').value
+            if data_all is None:
+                data_all = data
+            else:
+                data_all = np.concatenate((data_all, data), axis=0)
+            if count is not None:
+                if len(data_all) > count:
+                    data_all = data_all[:count+1]
+                    break
+            if wavenumber is None:
+                wavenumber = hdf5_r.get('spectrum_wavenumber').value
 
-    tbb = (c2 * center_wave) / np.log(1 + ((c1 * center_wave ** 3) / rad))
-    return tbb
+    x = list()
+    x_ranges = [(650., 1095), (1210., 1750.), (2155., 2550.)]
+    for start, end in x_ranges:
+        index_start = int(np.where(wavenumber == start)[0])
+        index_end = int(np.where(wavenumber == end)[0])
+        if len(x) <= 0:
+            x = data_all[:, index_start:index_end+1]
+        else:
+            x = np.concatenate((x, data_all[:, index_start:index_end+1]), axis=1)
+    y = list()
+    y_ranges = [(1095., 1210), (1750., 2155.), (2550., 2755.)]
+    for start, end in y_ranges:
+        index_start = int(np.where(wavenumber == start)[0])
+        index_end = int(np.where(wavenumber == end)[0])
+        if len(y) <= 0:
+            y = data_all[:, index_start+1:index_end]
+        else:
+            y = np.concatenate((y, data_all[:, index_start+1:index_end]), axis=1)
+    x = pd.DataFrame(x)
+    y = pd.DataFrame(y)
+    return x, y
+
+
+if __name__ == '__main__':
+    test_file = '/nas01/Data_anning/data/GapFilling/CRISFull/IASI_xxx_1C_M01_20180104003259Z_20180104003555Z_N_O_20180104011400Z__20180104011612'
+    x_, y_ = get_cris_full_train_data([test_file, test_file])
+    print(x_.shape)
+    print(y_.shape)
+    print(type(x_))
+    print(type(y_))

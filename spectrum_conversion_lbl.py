@@ -51,7 +51,7 @@ CRIS_FILTER_WIDTH = [20.0, ]
 
 def main():
     lbl_file = os.path.join(LBL_DIR, 'lblrtm_res_001.h5')
-    data = read_hdf5(lbl_file)
+    data = read_lbl_hdf5(lbl_file)
     # print data
 
     rad_lbl = data['SPECTRUM']
@@ -79,7 +79,7 @@ def main():
     )
     print(wavenumber_lbl2iasi[0], wavenumber_lbl2iasi[-1])
     statistics_print(spec_lbl2iasi)
-    plot_conversion_picture(plot_data_lbl2iasi, conversion_name)
+    # plot_conversion_picture(plot_data_lbl2iasi, conversion_name)
 
     # ################### Compute CrIS spectrum #############
     conversion_name = 'pic_lbl/LBL2CRIS_all'
@@ -91,7 +91,7 @@ def main():
     )
     print(wavenumber_lbl2cris[0], wavenumber_lbl2cris[-1])
     statistics_print(spec_lbl2cris)
-    plot_conversion_picture(plot_data_lbl2cris, conversion_name)
+    # plot_conversion_picture(plot_data_lbl2cris, conversion_name)
 
     # ################### Compute IASI to CrIS spectrum #############
     conversion_name = 'pic_lbl/IASI2CRIS_all'
@@ -100,13 +100,16 @@ def main():
         CRIS_BAND_F1[iband], CRIS_BAND_F2[iband], CRIS_D_FREQUENCY[iband],
         CRIS_F_NYQUIST, CRIS_RESAMPLE_MAXX[iband], CRIS_FILTER_WIDTH[iband],
         apodization_ori=iasi_apod, apodization_other=cris_apod,
-        plot=plot,
+        plot=None,
     )
     print(wavenumber_iasi2cris[0], wavenumber_iasi2cris[-1])
     statistics_print(spec_iasi2cris)
-    plot_conversion_picture(plot_data_iasi2cris, conversion_name)
+    # plot_conversion_picture(plot_data_iasi2cris, conversion_name)
 
     spec_bias = spec_iasi2cris - spec_lbl2cris
+
+    spec_relative_bias = (spec_iasi2cris - spec_lbl2cris) / spec_lbl2cris * 100
+
     plot_kwargs = {'s': 0.1}
     format_kwargs = {
         'x_axis_min': 0,
@@ -121,6 +124,22 @@ def main():
 
     }
     plot_scatter(wavenumber_iasi2cris, spec_bias, 'pic_lbl/IASI2CRIS_all_bias.png',
+                 format_kwargs=format_kwargs, plot_kwargs=plot_kwargs)
+
+    plot_kwargs = {'s': 0.1}
+    format_kwargs = {
+        'x_axis_min': 0,
+        'x_axis_max': 3000,
+        'x_interval': 500,
+        'x_label': 'Wavenumber($cm^{-1}$)',
+
+        'y_axis_min': -20,
+        'y_axis_max': 20,
+        'y_interval': 5,
+        'y_label': 'Radiance Relative Bias(%)'
+
+    }
+    plot_scatter(wavenumber_iasi2cris, spec_relative_bias, 'pic_lbl/IASI2CRIS_all_relative_bias.png',
                  format_kwargs=format_kwargs, plot_kwargs=plot_kwargs)
 
 
