@@ -18,7 +18,6 @@ def main(dir_in):
         radiances = loader_cris_full.get_spectrum_radiance()
 
 
-
 # ######################## 带参数的程序入口 ##############################
 if __name__ == "__main__":
     # 获取程序参数接口

@@ -114,7 +114,7 @@ if __name__ == "__main__":
         print(HELP_INFO)
         sys.exit(-1)
 
-    if len(ARGS) != 1:
+    if len(ARGS) != 2:
         print(HELP_INFO)
         sys.exit(-1)
     else:
