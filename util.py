@@ -98,6 +98,27 @@ def read_lbl_hdf5(in_file):
         return data
 
 
+def get_range_index(data_ranges, step=1.):
+    """
+    根据范围获取数据的index
+    :return:
+    """
+    index = []
+    count = 0
+    for start, end in data_ranges:
+        index_x = int(count)
+        increment = (end - start) / step + 1
+        index_y = int(increment + count)
+
+        count += increment
+
+        index_xy = [index_x, index_y]
+
+        index.append(index_xy)
+
+    return index
+
+
 def get_cris_full_train_data(in_files, x_ranges=None, y_ranges=None, count=None):
     """
     返回训练数据
@@ -111,21 +132,22 @@ def get_cris_full_train_data(in_files, x_ranges=None, y_ranges=None, count=None)
     wavenumber = None
     for in_file in in_files:
         with h5py.File(in_file, 'r') as hdf5_r:
-            data = hdf5_r.get('spectrum_radiance').value
+            data = hdf5_r.get('spectrum_radiance')[:]
             if data_all is None:
                 data_all = data
             else:
                 data_all = np.concatenate((data_all, data), axis=0)
+            if wavenumber is None:
+                wavenumber = hdf5_r.get('spectrum_wavenumber')[:]
+
             if count is not None:
                 if len(data_all) > count:
-                    data_all = data_all[:count+1]
+                    data_all = data_all[:count]
                     break
-            if wavenumber is None:
-                wavenumber = hdf5_r.get('spectrum_wavenumber').value
 
     x = list()
     if x_ranges is None:
-        x_ranges = [(650., 1095), (1210., 1750.), (2155., 2550.)]
+        x_ranges = [(650., 1095.), (1210., 1750.), (2155., 2550.)]
     for start, end in x_ranges:
         index_start = int(np.where(wavenumber == start)[0])
         index_end = int(np.where(wavenumber == end)[0])
@@ -135,23 +157,33 @@ def get_cris_full_train_data(in_files, x_ranges=None, y_ranges=None, count=None)
             x = np.concatenate((x, data_all[:, index_start:index_end+1]), axis=1)
     y = list()
     if y_ranges is None:
-        y_ranges = [(1095., 1210), (1750., 2155.), (2550., 2755.)]
+        y_ranges = [(1095.625, 1209.375), (1750.625, 2154.375), (2550.625, 2755.)]
     for start, end in y_ranges:
         index_start = int(np.where(wavenumber == start)[0])
         index_end = int(np.where(wavenumber == end)[0])
         if len(y) <= 0:
-            y = data_all[:, index_start+1:index_end]
+            y = data_all[:, index_start:index_end+1]
         else:
-            y = np.concatenate((y, data_all[:, index_start+1:index_end]), axis=1)
+            y = np.concatenate((y, data_all[:, index_start:index_end+1]), axis=1)
+
     x = pd.DataFrame(x)
     y = pd.DataFrame(y)
     return x, y
 
 
+def tbb2tad(sim_rad, cen_wave):
+    c1 = 1.1910427e-5
+    c2 = 1.4387752
+    sim_tbb = (c2 * cen_wave) / np.log(1 + ((c1 * cen_wave ** 3) / sim_rad))
+    return sim_tbb
+
+
 if __name__ == '__main__':
-    test_file = '/nas01/Data_anning/data/GapFilling/CRISFull/IASI_xxx_1C_M01_20180104003259Z_20180104003555Z_N_O_20180104011400Z__20180104011612'
-    x_, y_ = get_cris_full_train_data([test_file, test_file])
+    test_file = 'IASI_xxx_1C_M01_20180108003259Z_20180108003554Z_N_O_20180108012525Z__20180108012654'
+    x_, y_ = get_cris_full_train_data([test_file, test_file], count=2000)
     print(x_.shape)
     print(y_.shape)
     print(type(x_))
     print(type(y_))
+
+    print(get_range_index([(650., 1095.), (1210., 1750.), (2155., 2550.)], 0.625))
