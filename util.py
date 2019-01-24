@@ -171,13 +171,6 @@ def get_cris_full_train_data(in_files, x_ranges=None, y_ranges=None, count=None)
     return x, y
 
 
-def tbb2tad(sim_rad, cen_wave):
-    c1 = 1.1910427e-5
-    c2 = 1.4387752
-    sim_tbb = (c2 * cen_wave) / np.log(1 + ((c1 * cen_wave ** 3) / sim_rad))
-    return sim_tbb
-
-
 if __name__ == '__main__':
     test_file = 'IASI_xxx_1C_M01_20180108003259Z_20180108003554Z_N_O_20180108012525Z__20180108012654'
     x_, y_ = get_cris_full_train_data([test_file, test_file], count=2000)
