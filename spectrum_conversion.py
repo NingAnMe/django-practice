@@ -186,7 +186,7 @@ def ori2other(spectrum_ori, frequency_begin_ori, frequency_end_ori, frequency_in
 
     if_b1 = is_b - n_filter + 1
     if_e1 = is_b + 1
-    if_b2 = is_e - 1
+    if_b2 = is_e - 1  # 这里减1的效果不如不减好
     if_e2 = is_e + n_filter - 1
 
     frequency_filter = frequency[if_b1:if_e1]  # 600-620cm-1
