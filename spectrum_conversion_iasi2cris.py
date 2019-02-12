@@ -79,6 +79,10 @@ def iasi2cris(in_file, out_file):
 
     for radiance in radiances:
         radiance = radiance[:8461]  # 后面都是无效值
+        # 如果响应值中存在无效值，不进行转换
+        idx = np.where(radiance <= 0)[0]
+        if len(idx) > 0:
+            continue
 
         spec_iasi2cris, wavenumber_iasi2cris, plot_data_iasi2cris = ori2other(
             radiance, IASI_BAND_F1[iband], IASI_BAND_F2[iband], IASI_D_FREQUENCY[iband],
@@ -87,6 +91,10 @@ def iasi2cris(in_file, out_file):
             apodization_ori=iasi_apod, apodization_other=cris_apod,
         )
         spec_iasi2cris = spec_iasi2cris.reshape(1, -1)
+        # 如果转换后的响应值中存在无效值，不进行输出
+        idx = np.where(spec_iasi2cris <= 0)[0]
+        if len(idx) > 0:
+            continue
 
         if 'spectrum_radiance' not in result_out:
             result_out['spectrum_radiance'] = spec_iasi2cris
