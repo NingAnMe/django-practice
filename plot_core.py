@@ -4,6 +4,7 @@
 @Author  : AnNing
 """
 import os
+from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 import numpy as np
@@ -516,6 +517,8 @@ def get_month_avg_std(date_day, value_day):
 
     ymd_start = np.nanmin(date_day)  # 第一天日期
     ymd_end = np.nanmax(date_day)  # 最后一天日期
+    if not isinstance(ymd_start, datetime):
+        raise TypeError('must be datetime.datetime')
     month_date_start = ymd_start - relativedelta(
         days=(ymd_start.day - 1))  # 第一个月第一天日期
 
