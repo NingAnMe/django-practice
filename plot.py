@@ -64,6 +64,34 @@ def plot_line(x, y, out_file, format_kwargs=None, plot_kwargs=None):
     print('>>> {}'.format(out_file))
 
 
+def plot_model_validation(tbb_test, tbb_predict, wavenumber, index, out_file):
+    """
+    对模型结果进行验证
+    """
+    bias = tbb_predict - tbb_test
+
+    style_path = STYLE_PATH
+    style_file = os.path.join(style_path, 'plot_regression.mplstyle')
+    plt.style.use(style_file)
+    fig = plt.figure(figsize=(6.4, 3), dpi=120)
+    ax1 = plt.subplot2grid((2, 1), (0, 0))
+    ax2 = plt.subplot2grid((2, 1), (1, 0), sharex=ax1)
+
+    for s, d in index:
+        ax1.plot(wavenumber[s:d], bias.mean(axis=0)[s:d], lw=0.5)
+        ax1.set_ylim(-0.2, 0.2)
+        ax1.set_ylabel('Bias Mean $(K)$')
+        ax2.plot(wavenumber[s:d], bias.std(axis=0)[s:d], lw=0.5)
+        ax2.set_ylim(0.0, 1)
+        ax2.set_xlabel('Wavenumber $(cm^{-1})$')
+        ax2.set_ylabel('Bias Std $(K)$')
+    # ##### 保存图片
+    fig.savefig(out_file, dpi=100)
+    fig.clear()
+    plt.close()
+    print('>>> {}'.format(out_file))
+
+
 def plot_conversion_picture(plot_data, name):
     format_kwargs = {
         'x_axis_min': 0,
