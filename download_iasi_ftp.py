@@ -8,8 +8,6 @@
 
 from __future__ import print_function
 import os
-import requests
-import re
 
 
 OUT_PATH = 'download'  # 下载路径
@@ -40,26 +38,13 @@ ORDER_NUMBER_LIST = [u'3914687424', u'3914687724', u'3914688174', u'3914688684',
 
 def get_url_list(order):
     url_list = list()
-    in_uri = 'https://download.bou.class.noaa.gov/download/{}/001'.format(order)
-    session = requests.session()
-    response = session.get(in_uri)
-    if response.status_code == 200:
-        text = response.text
-        str_list = text.split()
-        pattern = r'.*"\d{3}/(.*__\d{14})">'
-        _host = in_uri + '/{}'
-        for s in str_list:
-            result = re.match(pattern, s)
-            if result:
-                host = _host.format(result.groups()[0])
-                url_list.append(host)
+    in_uri = 'ftp://ftp.bou.class.noaa.gov/{}/001/*'.format(order)
+    url_list.append(in_uri)
     return url_list
 
 
 def get_download_cmd(out_path, in_uri):
-    cmd_t = "wget --tries=3 --no-check-certificate \
-            --waitretry=3 -c --no-parent -nd -nH -q \
-            -P {out_path} -i {in_uri}"
+    cmd_t = "wget --no-passive-ftp -nH -c -nc -P {out_path} {in_uri}"
     return cmd_t.format(**{'out_path': out_path, 'in_uri': in_uri})
 
 

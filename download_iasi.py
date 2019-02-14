@@ -10,7 +10,6 @@ from __future__ import print_function
 import os
 import requests
 import re
-from multiprocessing import Pool
 
 
 OUT_PATH = 'download'  # 下载路径
@@ -41,14 +40,15 @@ ORDER_NUMBER_LIST = [u'3914687424', u'3914687724', u'3914688174', u'3914688684',
 
 def get_url_list(order):
     url_list = list()
-    in_uri = 'https://download.bou.class.noaa.gov/download/{}/001'.format(order)
+    http_uri = 'https://download.bou.class.noaa.gov/download/{}/001'.format(order)
+    ftp_uri = 'ftp://ftp.bou.class.noaa.gov/{}/001'.format(order)
     session = requests.session()
-    response = session.get(in_uri)
+    response = session.get(http_uri)
     if response.status_code == 200:
         text = response.text
         str_list = text.split()
         pattern = r'.*"\d{3}/(.*__\d{14})">'
-        _host = in_uri + '/{}'
+        _host = ftp_uri + '/{}'
         for s in str_list:
             result = re.match(pattern, s)
             if result:
@@ -58,9 +58,9 @@ def get_url_list(order):
 
 
 def get_download_cmd(out_path, in_uri):
-    cmd_t = "wget --tries=3 --no-check-certificate " \
-            "--waitretry=3 -c --no-parent -nd -nH -q " \
-            "-P {out_path} -i {in_uri}"
+    cmd_t = "wget --tries=3 --no-check-certificate \
+            --waitretry=3 -c --no-parent -nd -nH -q \
+            -P {out_path} -i {in_uri}"
     return cmd_t.format(**{'out_path': out_path, 'in_uri': in_uri})
 
 
@@ -79,14 +79,21 @@ def main():
     uri_list.sort()
 
     count = 0
-    pool = Pool(3)
     for uri in uri_list:
         count += 1
         print('Start downloading {} / {}'.format(count, len(uri_list)))
         cmd = get_download_cmd(OUT_PATH, uri)
-        pool.apply_async(os.system, (cmd,))
-    pool.close()
-    pool.join()
+        os.system(cmd)
+
+    # count = 0
+    # pool = Pool(3)
+    # for uri in uri_list:
+    #     count += 1
+    #     print('Start downloading {} / {}'.format(count, len(uri_list)))
+    #     cmd = get_download_cmd(OUT_PATH, uri)
+    #     pool.apply_async(os.system, (cmd,))
+    # pool.close()
+    # pool.join()
 
 
 if __name__ == '__main__':
