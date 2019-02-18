@@ -10,10 +10,12 @@ from __future__ import print_function
 import os
 import requests
 import re
+import sys
+from datetime import datetime
 
 
 OUT_PATH = 'download'  # 下载路径
-IASI_URI_FILE = 'iasi_uri.txt'  # 由订单号获取的数据下载链接
+IASI_URI_FILE = '20160405.txt'  # 由订单号获取的数据下载链接
 DOWNLOAD_THREADS = 3
 # IASI 数据订单号
 ORDER_NUMBER_LIST = [u'3914687424', u'3914687724', u'3914688174', u'3914688684', u'3914689104',
@@ -59,31 +61,40 @@ def get_url_list(order):
 
 def get_download_cmd(out_path, in_uri):
     cmd_t = "wget --tries=3 --no-check-certificate \
-            --waitretry=3 -c --no-parent -nd -nH -q \
+            --waitretry=3 -c --no-parent -nd -nH \
             -P {out_path} -i {in_uri}"
     return cmd_t.format(**{'out_path': out_path, 'in_uri': in_uri})
 
 
-def main():
+def main(file_name):
     uri_list = list()
-    if not os.path.isfile(IASI_URI_FILE):
-        for order in ORDER_NUMBER_LIST:
-            uri_list.extend(get_url_list(order))
-            print('URI count: {}'.format(len(uri_list)))
-        with open(IASI_URI_FILE, 'w') as f:
-            f.writelines([i + '\n' for i in uri_list])
+    if not file_name:
+        if not os.path.isfile(IASI_URI_FILE):
+            for order in ORDER_NUMBER_LIST:
+                uri_list.extend(get_url_list(order))
+                print('URI count: {}'.format(len(uri_list)))
+            with open(IASI_URI_FILE, 'w') as f:
+                f.writelines([i + '\n' for i in uri_list])
+        else:
+            with open(IASI_URI_FILE, 'r') as f:
+                uri_list = f.readlines()
+                print('URI count: {}'.format(len(uri_list)))
+        uri_list.sort()
     else:
         with open(IASI_URI_FILE, 'r') as f:
             uri_list = f.readlines()
             print('URI count: {}'.format(len(uri_list)))
-    uri_list.sort()
 
     count = 0
+    time_tmp = datetime.now()
     for uri in uri_list:
         count += 1
         print('Start downloading {} / {}'.format(count, len(uri_list)))
         cmd = get_download_cmd(OUT_PATH, uri)
+        print(cmd)
         os.system(cmd)
+        print(datetime.now() - time_tmp)
+        time_tmp = datetime.now()
 
     # count = 0
     # pool = Pool(3)
@@ -97,4 +108,9 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    args = sys.argv[1:]
+    if not args:
+        FILE_NAME = None
+    else:
+        FILE_NAME = args[0]
+    main(FILE_NAME)
