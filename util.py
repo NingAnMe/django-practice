@@ -132,13 +132,13 @@ def get_cris_full_train_data(in_files, x_ranges=None, y_ranges=None, count=None)
     wavenumber = None
     for in_file in in_files:
         with h5py.File(in_file, 'r') as hdf5_r:
-            data = hdf5_r.get('spectrum_radiance')[:]
+            data = hdf5_r.get('spectrum_radiance')[:].astype(np.float32)
             if data_all is None:
                 data_all = data
             else:
                 data_all = np.concatenate((data_all, data), axis=0)
             if wavenumber is None:
-                wavenumber = hdf5_r.get('spectrum_wavenumber')[:]
+                wavenumber = hdf5_r.get('spectrum_wavenumber')[:].astype(np.float32)
 
             if count is not None:
                 if len(data_all) > count:
