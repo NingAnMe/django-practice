@@ -55,14 +55,23 @@ def main(dir_in, dir_out):
     :param dir_out:  输出目录路径
     :return:
     """
-    in_files = os.listdir(dir_in)
+    dir_ins = ['/nas02/METOP-B/IASI/L1/ORBIT/2016/20160110',
+               '/nas02/METOP-B/IASI/L1/ORBIT/2016/20160406',
+               '/nas02/METOP-B/IASI/L1/ORBIT/2016/20160626',
+               '/nas02/METOP-B/IASI/L1/ORBIT/2016/20161101',]
+    for dir_in in dir_ins:
+        in_files = os.listdir(dir_in)
+        in_files.sort()
 
-    for in_file in in_files:
-        in_file = os.path.join(dir_in, in_file)
-        print('<<< {}'.format(in_file))
-        out_filename = os.path.basename(in_file)
-        out_file = os.path.join(dir_out, out_filename)
-        iasi2cris(in_file, out_file)
+        for in_file in in_files:
+            in_file = os.path.join(dir_in, in_file)
+            print('<<< {}'.format(in_file))
+            out_filename = os.path.basename(in_file)
+            out_file = os.path.join(dir_out, out_filename)
+            if not os.path.isfile(out_file):
+                iasi2cris(in_file, out_file)
+            else:
+                print("already exist: {}".format(out_file))
 
 
 def iasi2cris(in_file, out_file):
@@ -105,7 +114,10 @@ def iasi2cris(in_file, out_file):
         if 'spectrum_wavenumber' not in result_out:
             result_out['spectrum_wavenumber'] = wavenumber_iasi2cris.reshape(-1,)
 
-    write_hdf5_and_compress(out_file, result_out)
+    if 'spectrum_radiance' in result_out and 'spectrum_wavenumber' in result_out:
+        print(radiances.shape)
+        print(result_out['spectrum_radiance'].shape)
+        write_hdf5_and_compress(out_file, result_out)
 
 
 # ######################## 带参数的程序入口 ##############################
