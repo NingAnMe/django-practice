@@ -64,7 +64,7 @@ def plot_line(x, y, out_file, format_kwargs=None, plot_kwargs=None):
     print('>>> {}'.format(out_file))
 
 
-def plot_model_validation(tbb_test, tbb_predict, wavenumber, index, out_file):
+def plot_model_validate(tbb_test, tbb_predict, wavenumber, index, out_file):
     """
     对模型结果进行验证
     """
