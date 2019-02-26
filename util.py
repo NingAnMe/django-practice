@@ -116,7 +116,7 @@ def get_range_index(data_ranges, step=1.):
 
         index.append(index_xy)
 
-    return index
+    return np.array(index, dtype=np.int)
 
 
 def get_cris_full_train_data(in_files, x_ranges=None, y_ranges=None, count=None):
