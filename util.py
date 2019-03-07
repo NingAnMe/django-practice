@@ -4,10 +4,29 @@
 @Time    : 2019/1/10
 @Author  : AnNing
 """
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+
 import numpy as np
 import pandas as pd
 from netCDF4 import Dataset
 import h5py
+
+
+def is_day_timestamp_and_lon(timestamp, lon):
+    """
+    根据距离 1970-01-01 年的时间戳和经度计算是否为白天
+    :param timestamp: 距离 1970-01-01 年的时间戳
+    :param lon: 经度
+    :return:
+    """
+    zone = int(lon / 15.)
+    stime = datetime.utcfromtimestamp(timestamp)
+    HH = (stime + relativedelta(hours=zone)).strftime('%H')
+    if 6 <= int(HH) <= 18:
+        return True
+    else:
+        return False
 
 
 def statistics_print(data):

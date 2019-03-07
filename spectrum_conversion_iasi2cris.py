@@ -11,6 +11,9 @@ from hdf5 import write_hdf5_and_compress
 
 IBAND = [0, ]  # band 1、 2 or 3，光谱带
 
+NIGHT = True
+NOISE = False
+
 # #########  仪器参数 #############
 
 IASI_F_NYQUIST = 6912.0  # 频带宽度  cm-1
@@ -55,15 +58,22 @@ def main(dir_in, dir_out):
     :param dir_out:  输出目录路径
     :return:
     """
-    dir_ins = ['/nas02/METOP-B/IASI/L1/ORBIT/2016/20160110',
-               '/nas02/METOP-B/IASI/L1/ORBIT/2016/20160406',
-               '/nas02/METOP-B/IASI/L1/ORBIT/2016/20160626',
-               '/nas02/METOP-B/IASI/L1/ORBIT/2016/20161101',]
+    dir_ins = ['/home/cali/data/GapFilling/IASI', ]
+    dates = ['20160101', '20160406', '20160428', '20161030']
+
+    dir_out1 = '/home/cali/data/GapFilling/CRISFull'
+    dir_out2 = '/home/cali/data/GapFilling/CRISFull_validate'
     for dir_in in dir_ins:
         in_files = os.listdir(dir_in)
         in_files.sort()
-
         for in_file in in_files:
+            dir_out = None
+            for date in dates:
+                if date in in_file:
+                    dir_out = dir_out1
+                    break
+            if dir_out is None:
+                dir_out = dir_out2
             in_file = os.path.join(dir_in, in_file)
             print('<<< {}'.format(in_file))
             out_filename = os.path.basename(in_file)
@@ -82,16 +92,33 @@ def iasi2cris(in_file, out_file):
     """
     loader_iasi = LoaderIasiL1(in_file)
     radiances = loader_iasi.get_spectrum_radiance()
+    longitudes = loader_iasi.get_longitude()
+    timestamps = loader_iasi.get_timestamp_utc()
     iband = 0
 
     result_out = dict()
 
-    for radiance in radiances:
+    for i, radiance in enumerate(radiances):
         radiance = radiance[:8461]  # 后面都是无效值
         # 如果响应值中存在无效值，不进行转换
         idx = np.where(radiance <= 0)[0]
         if len(idx) > 0:
+            print('!!! Origin data has invalid data! continue.')
             continue
+
+        # 如果 night = True 那么只处理晚上数据
+        if NIGHT:
+            longitude = longitudes[i]
+            timestamp = timestamps[i]
+            if is_day_timestamp_and_lon(timestamp, longitude):
+                print('!!! Origin data ss not night data! continue.')
+                continue
+
+        # # 如果 NOISE = True 那么，减去 IASI 的 噪声再进行转换
+        # if NOISE:
+        #     iasi_noise = get_iasi_noise()
+        #     noise = creat_noise(iasi_noise)
+        #     radiance -= noise
 
         spec_iasi2cris, wavenumber_iasi2cris, plot_data_iasi2cris = ori2other(
             radiance, IASI_BAND_F1[iband], IASI_BAND_F2[iband], IASI_D_FREQUENCY[iband],
@@ -100,9 +127,11 @@ def iasi2cris(in_file, out_file):
             apodization_ori=iasi_apod, apodization_other=cris_apod,
         )
         spec_iasi2cris = spec_iasi2cris.reshape(1, -1)
+
         # 如果转换后的响应值中存在无效值，不进行输出
         idx = np.where(spec_iasi2cris <= 0)[0]
         if len(idx) > 0:
+            print('!!! Transformation data Has invalid data! continue.')
             continue
 
         if 'spectrum_radiance' not in result_out:

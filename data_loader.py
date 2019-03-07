@@ -11,6 +11,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
+try:
+    import harp
+except:
+    print('harp model is not existed! Cant load IASI data')
+
+
 from plot import STYLE_PATH, PlotAx
 
 
@@ -68,18 +74,35 @@ class LoaderIasiL1:
         self.in_file = in_file
 
     def get_spectrum_radiance(self):
-        import harp
         product = harp.import_product(self.in_file)
-        response = product.wavenumber_radiance.data * 1e5
+        data = product.wavenumber_radiance.data * 1e5
         del product
-        return response
+        return data
 
     def get_spectrum_wavenumber(self):
-        import harp
         product = harp.import_product(self.in_file)
-        wavenumber = product.wavenumber.data / 1e2
+        data = product.wavenumber.data / 1e2
         del product
-        return wavenumber
+        return data
+
+    def get_longitude(self):
+        product = harp.import_product(self.in_file)
+        data = product.longitude.data
+        del product
+        return data
+
+    def get_latitude(self):
+        product = harp.import_product(self.in_file)
+        data = product.latitude.data
+        del product
+        return data
+
+    def get_timestamp_utc(self):
+        product = harp.import_product(self.in_file)
+        # 1970-01-01 到 2000-01-01 的总秒数为  946684800
+        data = product.datetime.data + 946684800
+        del product
+        return data
 
 
 class LoaderCrisFull:
