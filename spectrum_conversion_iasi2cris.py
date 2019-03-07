@@ -12,7 +12,6 @@ from hdf5 import write_hdf5_and_compress
 IBAND = [0, ]  # band 1、 2 or 3，光谱带
 
 NIGHT = True
-NOISE = False
 
 # #########  仪器参数 #############
 
@@ -59,7 +58,7 @@ def main(dir_in, dir_out):
     :return:
     """
     dir_ins = ['/home/cali/data/GapFilling/IASI', ]
-    dates = ['20160101', '20160406', '20160428', '20161030']
+    dates = ['20160110', '20160406', '20160428', '20161030']
 
     dir_out1 = '/home/cali/data/GapFilling/CRISFull'
     dir_out2 = '/home/cali/data/GapFilling/CRISFull_validate'
@@ -99,9 +98,11 @@ def iasi2cris(in_file, out_file):
     result_out = dict()
 
     for i, radiance in enumerate(radiances):
+        print('Count: ', i)
         radiance = radiance[:8461]  # 后面都是无效值
         # 如果响应值中存在无效值，不进行转换
-        idx = np.where(radiance <= 0)[0]
+        condition = np.logical_or(radiance <= 0, radiance >= 200)
+        idx = np.where(condition)[0]
         if len(idx) > 0:
             print('!!! Origin data has invalid data! continue.')
             continue
@@ -111,14 +112,8 @@ def iasi2cris(in_file, out_file):
             longitude = longitudes[i]
             timestamp = timestamps[i]
             if is_day_timestamp_and_lon(timestamp, longitude):
-                print('!!! Origin data ss not night data! continue.')
+                print('!!! Origin data is not night data! continue.')
                 continue
-
-        # # 如果 NOISE = True 那么，减去 IASI 的 噪声再进行转换
-        # if NOISE:
-        #     iasi_noise = get_iasi_noise()
-        #     noise = creat_noise(iasi_noise)
-        #     radiance -= noise
 
         spec_iasi2cris, wavenumber_iasi2cris, plot_data_iasi2cris = ori2other(
             radiance, IASI_BAND_F1[iband], IASI_BAND_F2[iband], IASI_D_FREQUENCY[iband],
@@ -129,7 +124,8 @@ def iasi2cris(in_file, out_file):
         spec_iasi2cris = spec_iasi2cris.reshape(1, -1)
 
         # 如果转换后的响应值中存在无效值，不进行输出
-        idx = np.where(spec_iasi2cris <= 0)[0]
+        condition = np.logical_or(radiance <= 0, radiance >= 200)
+        idx = np.where(condition)[0]
         if len(idx) > 0:
             print('!!! Transformation data Has invalid data! continue.')
             continue
