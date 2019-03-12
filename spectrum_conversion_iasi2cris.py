@@ -8,10 +8,14 @@ from spectrum_conversion import *
 from util import *
 from data_loader import *
 from hdf5 import write_hdf5_and_compress
+from netCDF4 import Dataset
+
 
 IBAND = [0, ]  # band 1、 2 or 3，光谱带
 
 NIGHT = True
+
+IASI_NOISE = True
 
 # #########  仪器参数 #############
 
@@ -115,6 +119,10 @@ def iasi2cris(in_file, out_file):
                 print('!!! Origin data is not night data! continue.')
                 continue
 
+        if IASI_NOISE:
+            noise = get_noise('IASI')
+            radiance -= noise
+
         spec_iasi2cris, wavenumber_iasi2cris, plot_data_iasi2cris = ori2other(
             radiance, IASI_BAND_F1[iband], IASI_BAND_F2[iband], IASI_D_FREQUENCY[iband],
             CRIS_BAND_F1[iband], CRIS_BAND_F2[iband], CRIS_D_FREQUENCY[iband],
@@ -143,6 +151,40 @@ def iasi2cris(in_file, out_file):
         print(radiances.shape)
         print(result_out['spectrum_radiance'].shape)
         write_hdf5_and_compress(out_file, result_out)
+
+
+def get_noise(name='IASI'):
+    """
+    获取 IASI 的噪声数据
+    mean 为 0，sigma 为 给定值的正态分布
+    :return:
+    """
+    if name == 'IASI':
+        current_dir = os.path.abspath(os.path.curdir)
+        iasi_file = os.path.join(current_dir, 'data', 'iasi_instrument_noise.nc')
+        iasi_nc = Dataset(iasi_file)
+        noise = iasi_nc.variables['iasi_noise'][:]
+        iasi_nc.close()
+    else:
+        return None
+    noise_gauss = create_gauss_noise(noise)
+
+    return noise_gauss
+
+
+def create_gauss_noise(sigmas):
+    """
+    获取 mean 为 0， sigma 为给定值的正态分布
+    :param sigmas:
+    :return:
+    """
+    mean = 0
+    number = 1
+    noises = np.array([], dtype=np.float32)
+    for sigma in sigmas:
+        noise = np.random.normal(mean, sigma, number)
+        noises = np.append(noises, noise)
+    return noises
 
 
 # ######################## 带参数的程序入口 ##############################
