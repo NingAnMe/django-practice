@@ -9,6 +9,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 import numpy as np
+import pandas as pd
 from netCDF4 import Dataset
 import h5py
 
@@ -185,6 +186,9 @@ def get_cris_full_train_data(in_files, x_ranges=None, y_ranges=None, count=None)
         else:
             y = np.concatenate((y, data_all[:, index_start:index_end+1]), axis=1)
 
+    x = pd.DataFrame(x, dtype='float32')
+    y = pd.DataFrame(y, dtype='float32')
+
     return x, y
 
 
@@ -233,6 +237,18 @@ def load_cris_full_data(in_files, all_cris_full_data_file=None, sample_count=Non
     print(x.shape, y.shape)
 
     return x, y
+
+
+def get_wavenumber_by_range(ranges):
+    """
+    通过波段范围和分辨率获取波段的波数
+    :param ranges:
+    :return:
+    """
+    wavenumbers = np.array([])
+    for s, e, f in ranges:
+        wavenumbers = np.append(wavenumbers, np.arange(s, e + f, f))
+    return wavenumbers
 
 
 if __name__ == '__main__':
