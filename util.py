@@ -10,6 +10,7 @@ from dateutil.relativedelta import relativedelta
 
 import numpy as np
 import pandas as pd
+from sklearn.model_selection import train_test_split
 from netCDF4 import Dataset
 import h5py
 
@@ -270,6 +271,59 @@ def get_data_by_wavenumber_range(df_data, wavenumber, ranges):
         else:
             idx.extend(idx_tmp)
     return df_data.loc[:, idx]
+
+
+def load_train_data(x_all, y_all, wavenumber_x_all, wavenumber_y_all, ranges_x_all, ranges_y_all, ranges_x, ranges_y):
+    """
+    加载训练数据
+    :param x_all:
+    :param y_all:
+    :param wavenumber_x_all:
+    :param wavenumber_y_all:
+    :param ranges_x_all:
+    :param ranges_y_all:
+    :param ranges_x:
+    :param ranges_y:
+    :return:
+    """
+    if ranges_x != ranges_x_all:
+        x = get_data_by_wavenumber_range(x_all, wavenumber_x_all, ranges_x)
+    else:
+        x = x_all
+
+    if ranges_y != ranges_y_all:
+        y = get_data_by_wavenumber_range(y_all, wavenumber_y_all, ranges_y)
+    else:
+        y = y_all
+
+    # 将数据分为训练集和测试集
+    train_x, test_x, train_y, test_y = train_test_split(x, y, random_state=42, test_size=0.2)
+
+    # 制作绘图用的X轴数据
+    wavenumber_x = []
+    for s, e, f in ranges_x:
+        wavenumber_x = np.append(wavenumber_x, np.arange(s, e + f, f))
+
+    wavenumber_y = []
+    for s, e, f in ranges_y:
+        wavenumber_y = np.append(wavenumber_y, np.arange(s, e + f, f))
+
+    # 制作绘图用的切分X轴数据的index
+    index_x = get_range_index(ranges_x, step=0.625)
+    index_y = get_range_index(ranges_y, step=0.625)
+
+    data = {
+        'train_X': train_x,
+        'test_X': test_x,
+        'train_Y': train_y,
+        'test_Y': test_y,
+        'wavenumber_X': wavenumber_x,
+        'wavenumber_Y': wavenumber_y,
+        'index_X': index_x,
+        'index_Y': index_y,
+    }
+
+    return data
 
 
 if __name__ == '__main__':
