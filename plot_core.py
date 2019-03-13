@@ -20,6 +20,9 @@ import matplotlib.patches as mpatches
 from matplotlib import colorbar
 
 
+STYLE_PATH = os.path.split(os.path.realpath(__file__))[0]
+
+
 def get_ds_font(font_name="OpenSans-Regular.ttf"):
     """
     载入字体

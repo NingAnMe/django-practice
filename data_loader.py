@@ -10,14 +10,12 @@ import h5py
 import matplotlib.pyplot as plt
 import numpy as np
 
-
 try:
     import harp
 except:
     print('harp model is not existed! Cant load IASI data')
 
-
-from plot import STYLE_PATH, PlotAx
+from plot_core import STYLE_PATH, PlotAx
 
 
 class LoaderCrisL1:
@@ -208,17 +206,17 @@ if __name__ == '__main__':
     in_file_iasi = r'D:\nsmc\gap_filling_data\iasi_20180104.h5'
 
     format_kwargs_iasi = {
-            'x_axis_min': 0,
-            'x_axis_max': 3000,
-            'x_interval': 500,
-            'x_label': 'Wavenumber($cm^{-1}$)',
+        'x_axis_min': 0,
+        'x_axis_max': 3000,
+        'x_interval': 500,
+        'x_label': 'Wavenumber($cm^{-1}$)',
 
-            'y_axis_min': 0,
-            'y_axis_max': 150,
-            'y_interval': 30,
-            'y_label': 'Radiance($mw/m^2/sr/cm^{-1}$)'
+        'y_axis_min': 0,
+        'y_axis_max': 150,
+        'y_interval': 30,
+        'y_label': 'Radiance($mw/m^2/sr/cm^{-1}$)'
 
-        }
+    }
 
     out_file_iasi = 'pic\IASI_p0.png'
     plot_iasi(in_file_iasi, out_file_iasi, format_kwargs=format_kwargs_iasi)

@@ -7,9 +7,7 @@
 import os
 import matplotlib.pyplot as plt
 
-from plot_core import PlotAx
-
-STYLE_PATH = os.path.split(os.path.realpath(__file__))[0]
+from plot_core import PlotAx, STYLE_PATH
 
 
 def plot_scatter(x, y, out_file, format_kwargs=None, plot_kwargs=None):
