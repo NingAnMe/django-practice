@@ -242,13 +242,34 @@ def load_cris_full_data(in_files, all_cris_full_data_file=None, sample_count=Non
 def get_wavenumber_by_range(ranges):
     """
     通过波段范围和分辨率获取波段的波数
-    :param ranges:
+    :param ranges: 波段范围和分辨率 [(start, end, frequency),]
     :return:
     """
     wavenumbers = np.array([])
     for s, e, f in ranges:
         wavenumbers = np.append(wavenumbers, np.arange(s, e + f, f))
     return wavenumbers
+
+
+def get_data_by_wavenumber_range(df_data, wavenumber, ranges):
+    """
+    根据波数和波数范围获取数据
+    :param df_data: pd.DataFrame 格式
+    :param wavenumber: 波数
+    :param ranges: 波段范围和分辨率 [(start, end, frequency),]
+    :return:
+    """
+    wavenumber = wavenumber.tolist()
+    idx = list()
+    for range_s, range_e, _ in ranges:
+        idx_s = wavenumber.index(range_s)
+        idx_e = wavenumber.index(range_e)
+        idx_tmp = [i for i in range(idx_s, idx_e+1)]
+        if idx is None:
+            idx = idx_tmp
+        else:
+            idx.extend(idx_tmp)
+    return df_data.loc[:, idx]
 
 
 if __name__ == '__main__':
