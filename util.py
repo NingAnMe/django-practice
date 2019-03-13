@@ -4,7 +4,6 @@
 @Time    : 2019/1/10
 @Author  : AnNing
 """
-import os
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
@@ -119,14 +118,14 @@ def read_lbl_hdf5(in_file):
         return data
 
 
-def get_range_index(data_ranges, step=1.):
+def get_range_index_by_range(data_ranges):
     """
     根据范围获取数据的index
     :return:
     """
     index = []
     count = 0
-    for start, end, _ in data_ranges:
+    for start, end, step in data_ranges:
         index_x = int(count)
         increment = (end - start) / step + 1
         index_y = int(increment + count)
@@ -211,29 +210,41 @@ def get_linear_model_attributes(in_file):
     return coef, intercept
 
 
-def load_cris_full_data(in_files, all_cris_full_data_file=None, sample_count=None):
+def combine_cris_full_data(in_files, out_file):
+    """
+    合成全部的CRIS_full数据
+    :param in_files:
+    :param out_file:
+    :return:
+    """
+    x, y = get_cris_full_train_data(in_files)
+
+    compression = 'gzip'  # 压缩算法种类
+    compression_opts = 1  # 压缩等级
+    shuffle = True
+    with h5py.File(out_file, 'w') as hdf5:
+        hdf5.create_dataset('spectrum_radiance_X',
+                            dtype=np.float32, data=x, compression=compression,
+                            compression_opts=compression_opts,
+                            shuffle=shuffle)
+        hdf5.create_dataset('spectrum_radiance_Y',
+                            dtype=np.float32, data=y, compression=compression,
+                            compression_opts=compression_opts,
+                            shuffle=shuffle)
+
+
+def load_cris_full_combine_data(in_file, sample_count=None):
     """
     读取并清洗数据
     """
-    if not os.path.isfile(all_cris_full_data_file):
-        x, y = get_cris_full_train_data(in_files, count=sample_count)
-
-        compression = 'gzip'  # 压缩算法种类
-        compression_opts = 1  # 压缩等级
-        shuffle = True
-        with h5py.File(all_cris_full_data_file, 'w') as hdf5:
-            hdf5.create_dataset('spectrum_radiance_X',
-                                dtype=np.float32, data=x, compression=compression,
-                                compression_opts=compression_opts,
-                                shuffle=shuffle)
-            hdf5.create_dataset('spectrum_radiance_Y',
-                                dtype=np.float32, data=y, compression=compression,
-                                compression_opts=compression_opts,
-                                shuffle=shuffle)
-    else:
-        with h5py.File(all_cris_full_data_file, 'r') as hdf5:
+    with h5py.File(in_file, 'r') as hdf5:
+        if sample_count is None:
             x = hdf5.get('spectrum_radiance_X')[:]
             y = hdf5.get('spectrum_radiance_Y')[:]
+        else:
+            e = int(sample_count)
+            x = hdf5.get('spectrum_radiance_X')[:e]
+            y = hdf5.get('spectrum_radiance_Y')[:e]
 
     print(x.shape, y.shape)
 
@@ -273,20 +284,22 @@ def get_data_by_wavenumber_range(df_data, wavenumber, ranges):
     return df_data.loc[:, idx]
 
 
-def load_train_data_from_all(
-        x_all, y_all, wavenumber_x_all, wavenumber_y_all, ranges_x_all, ranges_y_all, ranges_x, ranges_y):
+def load_train_data_from_all(x_all, y_all, ranges_x_all, ranges_y_all, ranges_x, ranges_y):
     """
     加载训练数据
     :param x_all:
     :param y_all:
-    :param wavenumber_x_all:
-    :param wavenumber_y_all:
     :param ranges_x_all:
     :param ranges_y_all:
     :param ranges_x:
     :param ranges_y:
     :return:
     """
+    wavenumber_x_all = get_wavenumber_by_range(ranges_x_all)
+    wavenumber_y_all = get_wavenumber_by_range(ranges_y_all)
+
+    wavenumber_x = get_wavenumber_by_range(ranges_x)
+    wavenumber_y = get_wavenumber_by_range(ranges_y)
     if ranges_x != ranges_x_all:
         x = get_data_by_wavenumber_range(x_all, wavenumber_x_all, ranges_x)
     else:
@@ -300,18 +313,9 @@ def load_train_data_from_all(
     # 将数据分为训练集和测试集
     train_x, test_x, train_y, test_y = train_test_split(x, y, random_state=42, test_size=0.2)
 
-    # 制作绘图用的X轴数据
-    wavenumber_x = []
-    for s, e, f in ranges_x:
-        wavenumber_x = np.append(wavenumber_x, np.arange(s, e + f, f))
-
-    wavenumber_y = []
-    for s, e, f in ranges_y:
-        wavenumber_y = np.append(wavenumber_y, np.arange(s, e + f, f))
-
     # 制作绘图用的切分X轴数据的index
-    index_x = get_range_index(ranges_x, step=0.625)
-    index_y = get_range_index(ranges_y, step=0.625)
+    index_x = get_range_index_by_range(ranges_x)
+    index_y = get_range_index_by_range(ranges_y)
 
     data = {
         'train_X': train_x,
@@ -375,4 +379,4 @@ if __name__ == '__main__':
     print(type(x_))
     print(type(y_))
 
-    print(get_range_index([(650., 1095.), (1210., 1750.), (2155., 2550.)], 0.625))
+    print(get_range_index_by_range([(650., 1095., 0.625), (1210., 1750., 0.625), (2155., 2550., 0.625)]))
