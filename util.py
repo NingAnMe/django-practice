@@ -4,11 +4,11 @@
 @Time    : 2019/1/10
 @Author  : AnNing
 """
+import os
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 import numpy as np
-import pandas as pd
 from netCDF4 import Dataset
 import h5py
 
@@ -22,8 +22,8 @@ def is_day_timestamp_and_lon(timestamp, lon):
     """
     zone = int(lon / 15.)
     stime = datetime.utcfromtimestamp(timestamp)
-    HH = (stime + relativedelta(hours=zone)).strftime('%H')
-    if 6 <= int(HH) <= 18:
+    hh = (stime + relativedelta(hours=zone)).strftime('%H')
+    if 6 <= int(hh) <= 18:
         return True
     else:
         return False
@@ -203,7 +203,36 @@ def get_linear_model_attributes(in_file):
             intercept = obj2[:]
         else:
             intercept = None
-    return (coef, intercept)
+    return coef, intercept
+
+
+def load_cris_full_data(in_files, all_cris_full_data_file=None, sample_count=None):
+    """
+    读取并清洗数据
+    """
+    if not os.path.isfile(all_cris_full_data_file):
+        x, y = get_cris_full_train_data(in_files, count=sample_count)
+
+        compression = 'gzip'  # 压缩算法种类
+        compression_opts = 1  # 压缩等级
+        shuffle = True
+        with h5py.File(all_cris_full_data_file, 'w') as hdf5:
+            hdf5.create_dataset('spectrum_radiance_X',
+                                dtype=np.float32, data=x, compression=compression,
+                                compression_opts=compression_opts,
+                                shuffle=shuffle)
+            hdf5.create_dataset('spectrum_radiance_Y',
+                                dtype=np.float32, data=y, compression=compression,
+                                compression_opts=compression_opts,
+                                shuffle=shuffle)
+    else:
+        with h5py.File(all_cris_full_data_file, 'r') as hdf5:
+            x = hdf5.get('spectrum_radiance_X')[:]
+            y = hdf5.get('spectrum_radiance_Y')[:]
+
+    print(x.shape, y.shape)
+
+    return x, y
 
 
 if __name__ == '__main__':
