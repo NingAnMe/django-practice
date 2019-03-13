@@ -273,7 +273,8 @@ def get_data_by_wavenumber_range(df_data, wavenumber, ranges):
     return df_data.loc[:, idx]
 
 
-def load_train_data(x_all, y_all, wavenumber_x_all, wavenumber_y_all, ranges_x_all, ranges_y_all, ranges_x, ranges_y):
+def load_train_data_from_all(
+        x_all, y_all, wavenumber_x_all, wavenumber_y_all, ranges_x_all, ranges_y_all, ranges_x, ranges_y):
     """
     加载训练数据
     :param x_all:
@@ -323,6 +324,46 @@ def load_train_data(x_all, y_all, wavenumber_x_all, wavenumber_y_all, ranges_x_a
         'index_Y': index_y,
     }
 
+    return data
+
+
+def save_train_data(data, file_name):
+    """
+    保存训练数据
+    :param data:
+    :param file_name:
+    :return:
+    """
+    with h5py.File(file_name, 'w') as hdf5:
+        compression = 'gzip'  # 压缩算法种类
+        compression_opts = 1  # 压缩等级
+        shuffle = True
+        for data_name in data.keys():
+            hdf5.create_dataset(data_name,
+                                data=data[data_name], compression=compression,
+                                compression_opts=compression_opts,
+                                shuffle=shuffle)
+
+
+def load_train_data(file_name):
+    """
+    加载训练数据
+    :param file_name:
+    :return:
+    """
+    data = {
+        'train_X': None,
+        'test_X': None,
+        'train_Y': None,
+        'test_Y': None,
+        'wavenumber_X': None,
+        'wavenumber_Y': None,
+        'index_X': None,
+        'index_Y': None,
+    }
+    with h5py.File(file_name, 'r') as hdf5:
+        for data_name in data.keys():
+            data[data_name] = hdf5.get(data_name)[:]
     return data
 
 
