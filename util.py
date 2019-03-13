@@ -188,6 +188,24 @@ def get_cris_full_train_data(in_files, x_ranges=None, y_ranges=None, count=None)
     return x, y
 
 
+def get_linear_model_attributes(in_file):
+    """
+    获取线性模型的系数
+    """
+    with h5py.File(in_file, 'r') as hdf5:
+        obj1 = hdf5.get('P0')
+        if obj1 is not None:
+            coef = obj1[:]
+        else:
+            coef = None
+        obj2 = hdf5.get('C0')
+        if obj2 is not None:
+            intercept = obj2[:]
+        else:
+            intercept = None
+    return (coef, intercept)
+
+
 if __name__ == '__main__':
     test_file = 'IASI_xxx_1C_M01_20180108003259Z_20180108003554Z_N_O_20180108012525Z__20180108012654'
     x_, y_ = get_cris_full_train_data([test_file, test_file], count=2000)
