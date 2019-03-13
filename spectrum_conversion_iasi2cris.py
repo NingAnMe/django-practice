@@ -55,14 +55,15 @@ CRIS_FILTER_WIDTH = [20.0, ]
 # HIRAS_FILTER_WIDTH = [20.0, 24.0, 20.0]
 
 
-def main(dir_in, dir_out):
+def main(date):
     """
-    :param dir_in: 输入目录路径
-    :param dir_out:  输出目录路径
+    :param date:
+    # :param dir_in: 输入目录路径
+    # :param dir_out:  输出目录路径
     :return:
     """
     dir_ins = ['/home/cali/data/GapFilling/IASI', ]
-    dates = ['20160110', '20160406', '20160428', '20161030']
+    dates = ['20160110', '20160406', '20160626', '20161030']
 
     dir_out1 = '/home/cali/data/GapFilling/CRISFull'
     dir_out2 = '/home/cali/data/GapFilling/CRISFull_validate'
@@ -70,9 +71,11 @@ def main(dir_in, dir_out):
         in_files = os.listdir(dir_in)
         in_files.sort()
         for in_file in in_files:
+            if date not in in_file:
+                continue
             dir_out = None
-            for date in dates:
-                if date in in_file:
+            for d in dates:
+                if d in in_file:
                     dir_out = dir_out1
                     break
             if dir_out is None:
@@ -201,10 +204,9 @@ if __name__ == "__main__":
         print(HELP_INFO)
         sys.exit(-1)
 
-    if len(ARGS) != 2:
+    if len(ARGS) != 1:
         print(HELP_INFO)
         sys.exit(-1)
     else:
         ARG1 = ARGS[0]
-        ARG2 = ARGS[1]
-        main(ARG1, ARG2)
+        main(ARG1)
