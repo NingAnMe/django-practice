@@ -185,8 +185,6 @@ def get_cris_full_train_data(in_files, x_ranges=None, y_ranges=None, count=None)
         else:
             y = np.concatenate((y, data_all[:, index_start:index_end+1]), axis=1)
 
-    x = pd.DataFrame(x)
-    y = pd.DataFrame(y)
     return x, y
 
 
