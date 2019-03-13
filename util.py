@@ -124,7 +124,7 @@ def get_range_index(data_ranges, step=1.):
     """
     index = []
     count = 0
-    for start, end in data_ranges:
+    for start, end, _ in data_ranges:
         index_x = int(count)
         increment = (end - start) / step + 1
         index_y = int(increment + count)
