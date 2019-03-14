@@ -210,6 +210,28 @@ def get_linear_model_attributes(in_file):
     return coef, intercept
 
 
+def save_linear_model_attributes(coeff, intercept, out_file):
+    """
+    保存线性模型的属性
+    :param coeff:
+    :param intercept:
+    :param out_file:
+    :return:
+    """
+    compression = 'gzip'  # 压缩算法种类
+    compression_opts = 1  # 压缩等级
+    shuffle = True
+    with h5py.File(out_file, 'w') as hdf5:
+        hdf5.create_dataset('P0',
+                            dtype=np.float32, data=coeff, compression=compression,
+                            compression_opts=compression_opts,
+                            shuffle=shuffle)
+        hdf5.create_dataset('C0',
+                            dtype=np.float32, data=intercept, compression=compression,
+                            compression_opts=compression_opts,
+                            shuffle=shuffle)
+
+
 def combine_cris_full_data(in_files, out_file):
     """
     合成全部的CRIS_full数据
