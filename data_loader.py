@@ -12,6 +12,7 @@ import numpy as np
 
 try:
     import harp
+    import coda
 except:
     print('harp model is not existed! Cant load IASI data')
 
@@ -72,35 +73,68 @@ class LoaderIasiL1:
         self.in_file = in_file
 
     def get_spectrum_radiance(self):
+        """
+        获取辐射率
+        :return:
+        """
         product = harp.import_product(self.in_file)
         data = product.wavenumber_radiance.data * 1e5
         del product
         return data
 
     def get_spectrum_wavenumber(self):
+        """
+        获取波数
+        :return:
+        """
         product = harp.import_product(self.in_file)
         data = product.wavenumber.data / 1e2
         del product
         return data
 
     def get_longitude(self):
+        """
+        获取经度
+        :return:
+        """
         product = harp.import_product(self.in_file)
         data = product.longitude.data
         del product
         return data
 
     def get_latitude(self):
+        """
+        获取纬度
+        :return:
+        """
         product = harp.import_product(self.in_file)
         data = product.latitude.data
         del product
         return data
 
     def get_timestamp_utc(self):
+        """
+        获取时间
+        :return:
+        """
         product = harp.import_product(self.in_file)
         # 1970-01-01 到 2000-01-01 的总秒数为  946684800
         data = product.datetime.data + 946684800
         del product
         return data
+
+    def get_sun_zenith(self):
+        """
+        获取太阳天顶角
+        :return:
+        """
+        fp = coda.open(self.in_file)
+        angles = coda.fetch(fp, 'MDR', -1, 'MDR', 'GGeoSondAnglesSUN')
+        zenith = np.array([])
+        for i in angles:
+            z = i.reshape(-1)[0::2]
+            zenith = np.append(zenith, z)
+        return zenith
 
 
 class LoaderCrisFull:
