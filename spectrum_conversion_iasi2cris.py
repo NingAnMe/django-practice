@@ -15,8 +15,6 @@ IBAND = [0, ]  # band 1、 2 or 3，光谱带
 
 NIGHT = True
 
-IASI_NOISE = True
-
 # #########  仪器参数 #############
 
 IASI_F_NYQUIST = 6912.0  # 频带宽度  cm-1
@@ -107,7 +105,7 @@ def iasi2cris(in_file, out_file):
         print('Count: ', i)
         radiance = radiance[:8461]  # 后面都是无效值
         # 如果响应值中存在无效值，不进行转换
-        condition = np.logical_or(radiance <= 0, radiance >= 200)
+        condition = radiance <= 0
         idx = np.where(condition)[0]
         if len(idx) > 0:
             print('!!! Origin data has invalid data! continue.')
@@ -120,10 +118,6 @@ def iasi2cris(in_file, out_file):
                 print('!!! Origin data is not night data! continue.')
                 continue
 
-        if IASI_NOISE:
-            noise = get_noise('IASI')
-            radiance -= noise
-
         spec_iasi2cris, wavenumber_iasi2cris, plot_data_iasi2cris = ori2other(
             radiance, IASI_BAND_F1[iband], IASI_BAND_F2[iband], IASI_D_FREQUENCY[iband],
             CRIS_BAND_F1[iband], CRIS_BAND_F2[iband], CRIS_D_FREQUENCY[iband],
@@ -133,7 +127,7 @@ def iasi2cris(in_file, out_file):
         spec_iasi2cris = spec_iasi2cris.reshape(1, -1)
 
         # 如果转换后的响应值中存在无效值，不进行输出
-        condition = np.logical_or(radiance <= 0, radiance >= 200)
+        condition = radiance <= 0
         idx = np.where(condition)[0]
         if len(idx) > 0:
             print('!!! Transformation data Has invalid data! continue.')
