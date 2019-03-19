@@ -98,8 +98,7 @@ def iasi2cris(in_file, out_file):
     """
     loader_iasi = LoaderIasiL1(in_file)
     radiances = loader_iasi.get_spectrum_radiance()
-    longitudes = loader_iasi.get_longitude()
-    timestamps = loader_iasi.get_timestamp_utc()
+    sun_zenith = loader_iasi.get_sun_zenith()
     iband = 0
 
     result_out = dict()
@@ -116,9 +115,8 @@ def iasi2cris(in_file, out_file):
 
         # 如果 night = True 那么只处理晚上数据
         if NIGHT:
-            longitude = longitudes[i]
-            timestamp = timestamps[i]
-            if is_day_timestamp_and_lon(timestamp, longitude):
+            sz = sun_zenith[i]
+            if sz <= 90:
                 print('!!! Origin data is not night data! continue.')
                 continue
 
