@@ -63,7 +63,7 @@ def main(date):
     :return:
     """
     dir_ins = ['/home/cali/data/GapFilling/IASI', ]
-    dates = ['20160110', '20160406', '20160626', '20161030']
+    dates = ['20160110', '20160406', '20160626', '20161101']
 
     dir_out1 = '/home/cali/data/GapFilling/CRISFull'
     dir_out2 = '/home/cali/data/GapFilling/CRISFull_validate'
