@@ -13,7 +13,7 @@ import numpy as np
 try:
     import harp
     import coda
-except:
+except ImportError:
     print('harp model is not existed! Cant load IASI data')
 
 from plot_core import STYLE_PATH, PlotAx
@@ -41,12 +41,9 @@ class LoaderCrisL1:
             w0 = 0.23
             w1 = 0.54
             w2 = 0.23
-            sr_lw[:, :, :, 1:-1] = w0 * sr_lw[:, :, :, :-2] + \
-                                   w1 * sr_lw[:, :, :, 1:-1] + w2 * sr_lw[:, :, :, 2:]
-            sr_mw[:, :, :, 1:-1] = w0 * sr_mw[:, :, :, :-2] + \
-                                   w1 * sr_mw[:, :, :, 1:-1] + w2 * sr_mw[:, :, :, 2:]
-            sr_sw[:, :, :, 1:-1] = w0 * sr_sw[:, :, :, :-2] + \
-                                   w1 * sr_sw[:, :, :, 1:-1] + w2 * sr_sw[:, :, :, 2:]
+            sr_lw[:, :, :, 1:-1] = w0 * sr_lw[:, :, :, :-2] + w1 * sr_lw[:, :, :, 1:-1] + w2 * sr_lw[:, :, :, 2:]
+            sr_mw[:, :, :, 1:-1] = w0 * sr_mw[:, :, :, :-2] + w1 * sr_mw[:, :, :, 1:-1] + w2 * sr_mw[:, :, :, 2:]
+            sr_sw[:, :, :, 1:-1] = w0 * sr_sw[:, :, :, :-2] + w1 * sr_sw[:, :, :, 1:-1] + w2 * sr_sw[:, :, :, 2:]
 
             sr_lw = sr_lw[:, :, :, 2:-2]
             sr_mw = sr_mw[:, :, :, 2:-2]
@@ -66,6 +63,82 @@ class LoaderCrisL1:
 
     def get_spectrum_response_wavenumber(self):
         pass
+
+
+class LoadFullCris:
+    def __init__(self, in_file):
+        self.in_file = in_file
+
+    def get_spectral_response_high(self, coeff_file):
+        """
+        return 光谱波数和响应值，1维，2维
+        """
+
+        shape = (16200, 1)
+        # 增加切趾计算
+        w0 = 0.23
+        w1 = 0.54
+        w2 = 0.23
+        data_file = self.in_file
+        with h5py.File(data_file, 'r') as h5r:
+            sds_name = '/All_Data/CrIS-FS-SDR_All/ES_RealLW'
+            real_lw = h5r.get(sds_name)[:]
+
+            sds_name = '/All_Data/CrIS-FS-SDR_All/ES_RealMW'
+            real_mw = h5r.get(sds_name)[:]
+
+            sds_name = '/All_Data/CrIS-FS-SDR_All/ES_RealSW'
+            real_sw = h5r.get(sds_name)[:]
+
+        # 切趾计算 w0*n-1 + w1*n + w2*n+1 当作n位置的修正值
+        # 开头和结尾不参与计算
+        real_lw[:, :, :, 1:-1] = w0 * real_lw[:, :, :, :-2] + \
+            w1 * real_lw[:, :, :, 1:-1] + w2 * real_lw[:, :, :, 2:]
+        real_mw[:, :, :, 1:-1] = w0 * real_mw[:, :, :, :-2] + \
+            w1 * real_mw[:, :, :, 1:-1] + w2 * real_mw[:, :, :, 2:]
+        real_sw[:, :, :, 1:-1] = w0 * real_sw[:, :, :, :-2] + \
+            w1 * real_sw[:, :, :, 1:-1] + w2 * real_sw[:, :, :, 2:]
+        print(real_lw.shape)
+        real_lw = real_lw[:, :, :, 2:-2]
+        real_mw = real_mw[:, :, :, 2:-2]
+        real_sw = real_sw[:, :, :, 2:-2]
+        print(real_lw.shape)
+
+        # 波数范围和步长
+        wave_number = np.arange(650., 2755.0 + 0.625, 0.625)
+
+        response_old = np.concatenate((real_lw, real_mw, real_sw), axis=3)
+        last_s = response_old.shape[-1]
+        # 16200*最后一个光谱维度
+        response_old = response_old.reshape(shape[0], last_s)
+
+        if not os.path.isfile(coeff_file):
+            raise ValueError('Data file is not exist. {}'.format(data_file))
+        with h5py.File(coeff_file, 'r') as h5r:
+            c0 = h5r.get('C0')[:]
+            p0 = h5r.get('P0')[:]
+            gap_num = h5r.get('GAP_NUM')[:]
+
+        response_new = np.dot(response_old, p0)
+        response_new = response_new + c0
+        print('4', response_new.shape)
+        ch_part1 = gap_num[0]
+        ch_part2 = gap_num[0] + gap_num[1]
+        ch_part3 = gap_num[0] + gap_num[1] + gap_num[2]
+        real_lw_e = response_new[:, 0:ch_part1]
+        real_mw_e = response_new[:, ch_part1:ch_part2]
+        real_sw_e = response_new[:, ch_part2:ch_part3]
+
+        # 把原响应值 维度转成2维
+        real_lw = real_lw.reshape(shape[0], real_lw.shape[-1])
+        real_mw = real_mw.reshape(shape[0], real_mw.shape[-1])
+        real_sw = real_sw.reshape(shape[0], real_sw.shape[-1])
+        response = np.concatenate(
+            (real_lw, real_lw_e, real_mw, real_mw_e, real_sw, real_sw_e), axis=1)
+        shape = response.shape
+        response = response.reshape(shape[0], 1, shape[1])
+
+        return wave_number, response
 
 
 class LoaderIasiL1:
