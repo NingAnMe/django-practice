@@ -65,11 +65,11 @@ class LoaderCrisL1:
         pass
 
 
-class LoadFullCris:
+class LoadRealCris:
     def __init__(self, in_file):
         self.in_file = in_file
 
-    def get_spectral_response_high(self, coeff_file):
+    def get_spectrum_radiance(self, coeff_file):
         """
         return 光谱波数和响应值，1维，2维
         """
