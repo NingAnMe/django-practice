@@ -9,7 +9,8 @@ from util import *
 from data_loader import *
 from hdf5 import write_hdf5_and_compress
 from netCDF4 import Dataset
-
+import numpy as np
+import matplotlib.pyplot as plt
 
 IBAND = [0, ]  # band 1、 2 or 3，光谱带
 
@@ -51,6 +52,31 @@ CRIS_FILTER_WIDTH = [20.0, ]
 # HIRAS_BAND_F1 = [650.00, 1210.00, 2155.0]
 # HIRAS_BAND_F2 = [1095.00, 1750.00, 2550.0]
 # HIRAS_FILTER_WIDTH = [20.0, 24.0, 20.0]
+
+
+def conv():
+    iband = 0
+    in_file = r'D:\nsmc\LBL\data\iasi_001.h5'
+    with h5py.File(in_file, 'r') as h5:
+        radiance = h5.get('spectrum')[:8461]
+
+    spec_iasi2cris, wavenumber_iasi2cris, plot_data_iasi2cris = ori2other(
+        radiance, IASI_BAND_F1[iband], IASI_BAND_F2[iband], IASI_D_FREQUENCY[iband],
+        CRIS_BAND_F1[iband], CRIS_BAND_F2[iband], CRIS_D_FREQUENCY[iband],
+        CRIS_F_NYQUIST, CRIS_RESAMPLE_MAXX[iband], CRIS_FILTER_WIDTH[iband],
+        apodization_ori=iasi_apod, apodization_other=cris_apod,
+    )
+
+    spec1 = np.loadtxt(r'D:\nsmc\LBL\data\iasi_001.csv', delimiter=',')
+
+    plt.plot(spec_iasi2cris - spec1)
+    plt.tight_layout()
+    plt.savefig('002.png')
+    plt.show()
+
+    print('sum: ', sum(spec_iasi2cris - spec1))
+
+    np.savetxt(r'D:\nsmc\LBL\data\iasi_002.csv', spec_iasi2cris, delimiter=',')
 
 
 def main(date):
@@ -202,3 +228,5 @@ if __name__ == "__main__":
     else:
         ARG1 = ARGS[0]
         main(ARG1)
+# if __name__ == '__main__':
+#     conv()

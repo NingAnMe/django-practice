@@ -5,6 +5,7 @@
 @Author  : AnNing
 """
 import numpy as np
+from util import statistics_print
 
 
 def lbl2other(spectrum_lbl, frequency_begin_lbl, frequency_end_lbl, frequency_interval_lbl,
@@ -167,13 +168,13 @@ def ori2other(spectrum_ori, frequency_begin_ori, frequency_end_ori, frequency_in
 
     # ########## 做一条和LBL相同分辨率的光谱，频带宽度和other相同
     # totalnum=width(cm-1)/interval  加1.5是因为要做切趾计算
-    n_spectrum = int(np.floor(nyquist_other / fi_ori + 1.5))  # 要在LBL采样的点数 6912001
+    n_spectrum = int(np.floor(nyquist_other / fi_ori + 1.5))  # 要在IASI采样的点数
 
     spectrum = np.zeros(n_spectrum, dtype=np.float64)  # other光谱
     frequency = np.arange(0, n_spectrum, dtype=np.float64) * fi_ori  # other频率
 
-    is_b = int(np.floor(fb_ori / fi_ori + 0.5))  # 放到other光谱的开始位置,index_spec_begin
-    is_e = int(np.floor(fe_ori / fi_ori + 0.5)) + 1  # 放到other光谱的结束位置 index_spec_end
+    is_b = int(np.floor(fb_ori / fi_ori + 0.5)) - 1  # 放到other光谱的开始位置,index_spec_begin
+    is_e = int(np.floor(fe_ori / fi_ori + 0.5))  # 放到other光谱的结束位置 index_spec_end
 
     spectrum[is_b: is_e] = spec_ori  # spec_ori 放到光谱的对应位置
     # p1 原始光谱格栅到iasi的光谱网格上
@@ -191,12 +192,13 @@ def ori2other(spectrum_ori, frequency_begin_ori, frequency_end_ori, frequency_in
 
     frequency_filter = frequency[if_b1:if_e1]  # 600-620cm-1
 
-    bfilter = 0.5 * (
-            1.0 + np.cos((frequency_filter - frequency_filter[0]) * np.pi / cos_filter_width))
-    ffilter = bfilter[::-1]
+    cos_filter = 0.5 * (1.0 + np.cos((frequency_filter - frequency_filter[0]) * np.pi / cos_filter_width))
 
-    spectrum[if_b1:if_e1] = spectrum[is_b] * ffilter
-    spectrum[if_b2:if_e2] = spectrum[is_e] * bfilter
+    bfilter = cos_filter * spectrum[is_e-1]
+    ffilter = cos_filter[-1::-1] * spectrum[is_b]
+
+    spectrum[if_b1:if_e1] = ffilter
+    spectrum[if_b2:if_e2] = bfilter
 
     # p2 cos 滤波之后
     if plot:
@@ -219,6 +221,8 @@ def ori2other(spectrum_ori, frequency_begin_ori, frequency_end_ori, frequency_in
     ifg_ori = np.fft.fft(spectrum_fft) * fi_ori
     # 傅里叶反变换，转换为双边干涉图，光程差 500cm ，双边 1000cm，间隔 dx
     # 共n_ifg个点，13824000，是全部的干涉图，需要截取
+
+    statistics_print(ifg_ori)
 
     # p4 傅里叶转换后的干涉图
     if plot:
@@ -244,7 +248,7 @@ def ori2other(spectrum_ori, frequency_begin_ori, frequency_end_ori, frequency_in
 
     # ########## 移除原来的 apod，应用新的 apod
     ifg_ap = ifg_other / apodization_ori(x_other)
-    ifg_other_ap = ifg_ap * apodization_other(x_other)
+    # ifg_other_ap = ifg_ap * apodization_other(x_other)
 
     # p6 apodization
     if plot:
@@ -253,9 +257,9 @@ def ori2other(spectrum_ori, frequency_begin_ori, frequency_end_ori, frequency_in
 
     # ########## convert ifg to spectrum，做一个对称的光谱
     n_ifg_fft = 2 * (n_ifg_other - 1)  # 干涉图点数拓展
-    ifg_fft = np.arange(0, n_ifg_fft, dtype=ifg_other_ap.dtype)
-    ifg_fft[0:n_ifg_other] = ifg_other_ap
-    ifg_fft[n_ifg_other:] = ifg_other_ap[-2:0:-1]
+    ifg_fft = np.arange(0, n_ifg_fft, dtype=ifg_ap.dtype)
+    ifg_fft[0:n_ifg_other] = ifg_ap
+    ifg_fft[n_ifg_other:] = ifg_ap[-2:0:-1]
     # 干涉图拓展 光程差2*2cm 为 4cm  点数n_ifg_fft 55296 间隔
     # 去掉最大值,和最末的值
 
@@ -266,14 +270,22 @@ def ori2other(spectrum_ori, frequency_begin_ori, frequency_end_ori, frequency_in
 
     # ########## FFT 正变换
     spectrum_other_comp = np.fft.ifft(ifg_fft) * dx_other * n_ifg_fft  # FFT 正变换
+    statistics_print(spectrum_other_comp)
     spectrum_other_comp = spectrum_other_comp.real  # 仅使用实数
 
     # ########## take out other portion of the spectrum
     # 取得iasi的光谱  在干涉图中按2cm最大光程差取完之后，做FFT反变换得到的光谱的分辨率就是0.25cm-1
     nt1 = int(np.floor(fb_other / fi_other + 0.5))
     nt2 = int(np.floor(fe_other / fi_other + 0.5))
-    spectrum_other = spectrum_other_comp[nt1: nt2 + 1]
     n_spectrum_iasi = nt2 - nt1 + 1
+    spectrum_other = np.zeros(n_spectrum_iasi)
+
+    # 20190416 将干涉图维度的平滑计算改到光谱维度
+    a = 0.23
+    coef = np.array([a, (1 - 2 * a), a])
+    for i in range(nt1, nt2+1):
+        spectrum_other[i-nt1] = sum(spectrum_other_comp[i-1:i+2] * coef)
+
     wavenumber_other = np.arange(0, n_spectrum_iasi, dtype=np.float64)
     wavenumber_other = fb_other + wavenumber_other * frequency_interval_other
 
