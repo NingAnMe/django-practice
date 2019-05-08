@@ -8,7 +8,7 @@ from plot_conversion import *
 from util import *
 
 IBAND = [0, 1, 2]  # band 1、 2 or 3，光谱带
-LBL_DIR = r'D:\nsmc\LBL\data'
+LBL_DIR = r'D:\nsmc\LBL'
 
 # #########  仪器参数 #############
 FILTER_WIDTH = 20.0  # cm-1  # COS过滤器过滤的宽度

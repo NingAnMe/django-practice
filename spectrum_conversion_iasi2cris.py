@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 
 IBAND = [0, ]  # band 1、 2 or 3，光谱带
 
-NIGHT = True
+NIGHT = False
 
 # #########  仪器参数 #############
 
@@ -25,7 +25,7 @@ IASI_BAND_F1 = [645.25, ]  # 光谱带开始
 IASI_BAND_F2 = [2760.25, ]  # 光谱带结束
 IASI_FILTER_WIDTH = [20.0, ]  # cm-1  # COS过滤器过滤的宽度
 
-CRIS_F_NYQUIST = 5875.0
+CRIS_F_NYQUIST = 5866.0
 CRIS_RESAMPLE_MAXX = [0.8, ]
 CRIS_D_FREQUENCY = [0.625, ]
 CRIS_BAND_F1 = [650.00, ]
@@ -39,14 +39,14 @@ CRIS_FILTER_WIDTH = [20.0, ]
 # IASI_BAND_F2 = [1209.75, 1999.75, 2760.0]  # 光谱带结束
 # IASI_FILTER_WIDTH = [20.0, 20.0, 20.0]
 
-# CRIS_F_NYQUIST = 5875.0
+# CRIS_F_NYQUIST = 5866.0
 # CRIS_RESAMPLE_MAXX = [0.8, 0.8, 0.8]
 # CRIS_D_FREQUENCY = [0.625, 0.625, 0.625]
 # CRIS_BAND_F1 = [650.00, 1210.00, 2155.0]
 # CRIS_BAND_F2 = [1135.00, 1750.00, 2550.0]
 # CRIS_FILTER_WIDTH = [20.0, 20.0, 20.0]
-#
-# HIRAS_F_NYQUIST = 5866.0
+
+# HIRAS_F_NYQUIST = 5875.0
 # HIRAS_RESAMPLE_MAXX = [0.8, 0.8, 0.8]
 # HIRAS_D_FREQUENCY = [0.625, 1.25, 2.5]
 # HIRAS_BAND_F1 = [650.00, 1210.00, 2155.0]
@@ -69,9 +69,16 @@ def conv():
 
     spec1 = np.loadtxt(r'D:\nsmc\LBL\data\iasi_001.csv', delimiter=',')
 
-    plt.plot(spec_iasi2cris - spec1)
+    plt.plot(rad2tbb(spec_iasi2cris, wavenumber_iasi2cris))
     plt.tight_layout()
-    plt.savefig('002.png')
+    plt.savefig('003.png')
+    plt.show()
+
+    frequency = np.arange(0, 8461, dtype=np.float64) * 0.25 + 650.25
+
+    plt.plot(rad2tbb(radiance, frequency))
+    plt.tight_layout()
+    plt.savefig('004.png')
     plt.show()
 
     print('sum: ', sum(spec_iasi2cris - spec1))
@@ -140,7 +147,7 @@ def iasi2cris(in_file, out_file):
         # 如果 night = True 那么只处理晚上数据
         if NIGHT:
             sz = sun_zenith[i]
-            if sz <= 90:
+            if sz <= 95:
                 print('!!! Origin data is not night data! continue.')
                 continue
 
@@ -228,5 +235,6 @@ if __name__ == "__main__":
     else:
         ARG1 = ARGS[0]
         main(ARG1)
+
 # if __name__ == '__main__':
 #     conv()

@@ -255,6 +255,31 @@ def combine_cris_full_data(in_files, out_file):
                             shuffle=shuffle)
 
 
+def combine_full_data(in_files, out_file, x_ranges=None, y_ranges=None):
+    """
+    合成全部的CRIS_full数据
+    :param y_ranges:
+    :param x_ranges:
+    :param in_files:
+    :param out_file:
+    :return:
+    """
+    x, y = get_cris_full_train_data(in_files, x_ranges=x_ranges, y_ranges=y_ranges)
+
+    compression = 'gzip'  # 压缩算法种类
+    compression_opts = 1  # 压缩等级
+    shuffle = True
+    with h5py.File(out_file, 'w') as hdf5:
+        hdf5.create_dataset('spectrum_radiance_X',
+                            dtype=np.float32, data=x, compression=compression,
+                            compression_opts=compression_opts,
+                            shuffle=shuffle)
+        hdf5.create_dataset('spectrum_radiance_Y',
+                            dtype=np.float32, data=y, compression=compression,
+                            compression_opts=compression_opts,
+                            shuffle=shuffle)
+
+
 def load_cris_full_combine_data(in_file, sample_count=None):
     """
     读取并清洗数据
@@ -293,6 +318,9 @@ def get_data_by_wavenumber_range(df_data, wavenumber, ranges):
     :param ranges: 波段范围和分辨率 [(start, end, frequency),]
     :return:
     """
+    if not isinstance(df_data, pd.DataFrame):
+        df_data = pd.DataFrame(df_data)
+
     wavenumber = wavenumber.tolist()
     idx = list()
     for range_s, range_e, _ in ranges:
@@ -322,15 +350,10 @@ def load_train_data_from_all(x_all, y_all, ranges_x_all, ranges_y_all, ranges_x,
 
     wavenumber_x = get_wavenumber_by_range(ranges_x)
     wavenumber_y = get_wavenumber_by_range(ranges_y)
-    if ranges_x != ranges_x_all:
-        x = get_data_by_wavenumber_range(x_all, wavenumber_x_all, ranges_x)
-    else:
-        x = x_all
 
-    if ranges_y != ranges_y_all:
-        y = get_data_by_wavenumber_range(y_all, wavenumber_y_all, ranges_y)
-    else:
-        y = y_all
+    x = get_data_by_wavenumber_range(x_all, wavenumber_x_all, ranges_x)
+
+    y = get_data_by_wavenumber_range(y_all, wavenumber_y_all, ranges_y)
 
     # 将数据分为训练集和测试集
     train_x, test_x, train_y, test_y = train_test_split(x, y, random_state=42, test_size=0.2)

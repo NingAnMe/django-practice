@@ -8,7 +8,6 @@ from spectrum_conversion import *
 from util import *
 from data_loader import *
 from hdf5 import write_hdf5_and_compress
-from netCDF4 import Dataset
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -25,12 +24,12 @@ IASI_BAND_F1 = [645.25, ]  # 光谱带开始
 IASI_BAND_F2 = [2760.25, ]  # 光谱带结束
 IASI_FILTER_WIDTH = [20.0, ]  # cm-1  # COS过滤器过滤的宽度
 
-CRIS_F_NYQUIST = 5875.0
-CRIS_RESAMPLE_MAXX = [0.8, ]
-CRIS_D_FREQUENCY = [0.625, ]
-CRIS_BAND_F1 = [650.00, ]
-CRIS_BAND_F2 = [2755.00, ]
-CRIS_FILTER_WIDTH = [20.0, ]
+GIIRS_F_NYQUIST = 5875.0
+GIIRS_RESAMPLE_MAXX = [0.8, ]
+GIIRS_D_FREQUENCY = [0.625, ]
+GIIRS_BAND_F1 = [650.00, ]
+GIIRS_BAND_F2 = [2755.00, ]
+GIIRS_FILTER_WIDTH = [20.0, ]
 
 # IASI_F_NYQUIST = 6912.0  # 频带宽度  cm-1
 # IASI_RESAMPLE_MAXX = [2.0, 2.0, 2.0]  # cm OPD
@@ -39,14 +38,14 @@ CRIS_FILTER_WIDTH = [20.0, ]
 # IASI_BAND_F2 = [1209.75, 1999.75, 2760.0]  # 光谱带结束
 # IASI_FILTER_WIDTH = [20.0, 20.0, 20.0]
 
-# CRIS_F_NYQUIST = 5875.0
+# CRIS_F_NYQUIST = 5866.0
 # CRIS_RESAMPLE_MAXX = [0.8, 0.8, 0.8]
 # CRIS_D_FREQUENCY = [0.625, 0.625, 0.625]
 # CRIS_BAND_F1 = [650.00, 1210.00, 2155.0]
 # CRIS_BAND_F2 = [1135.00, 1750.00, 2550.0]
 # CRIS_FILTER_WIDTH = [20.0, 20.0, 20.0]
 
-# HIRAS_F_NYQUIST = 5866.0
+# HIRAS_F_NYQUIST = 5875.0
 # HIRAS_RESAMPLE_MAXX = [0.8, 0.8, 0.8]
 # HIRAS_D_FREQUENCY = [0.625, 1.25, 2.5]
 # HIRAS_BAND_F1 = [650.00, 1210.00, 2155.0]
@@ -60,30 +59,36 @@ def conv():
     with h5py.File(in_file, 'r') as h5:
         radiance = h5.get('spectrum')[:8461]
 
-    spec_iasi2cris, wavenumber_iasi2cris, plot_data_iasi2cris = ori2other(
+    spec_iasi2giirs, wavenumber_iasi2giirs, plot_data_iasi2giirs = iasi2hiras(
         radiance, IASI_BAND_F1[iband], IASI_BAND_F2[iband], IASI_D_FREQUENCY[iband],
-        CRIS_BAND_F1[iband], CRIS_BAND_F2[iband], CRIS_D_FREQUENCY[iband],
-        CRIS_F_NYQUIST, CRIS_RESAMPLE_MAXX[iband], CRIS_FILTER_WIDTH[iband],
-        apodization_ori=iasi_apod, apodization_other=cris_apod,
-    )
+        GIIRS_BAND_F1[iband], GIIRS_BAND_F2[iband], GIIRS_D_FREQUENCY[iband],
+        GIIRS_F_NYQUIST, GIIRS_RESAMPLE_MAXX[iband], GIIRS_FILTER_WIDTH[iband],
+        apodization_ori=iasi_apod,)
+
+    print(spec_iasi2giirs.size)
 
     spec1 = np.loadtxt(r'D:\nsmc\LBL\data\iasi_001.csv', delimiter=',')
 
-    plt.plot(rad2tbb(spec_iasi2cris, wavenumber_iasi2cris))
-    plt.tight_layout()
-    plt.savefig('003.png')
-    plt.show()
+    # plt.plot(rad2tbb(spec_iasi2giirs, wavenumber_iasi2giirs))
+    # plt.tight_layout()
+    # plt.savefig('003.png')
+    # plt.show()
+    #
+    # frequency = np.arange(0, 8461, dtype=np.float64) * 0.25 + 645.25
+    #
+    # plt.plot(rad2tbb(radiance, frequency))
+    # plt.tight_layout()
+    # plt.savefig('004.png')
+    # plt.show()
 
-    frequency = np.arange(0, 8461, dtype=np.float64) * 0.25 + 650.25
-
-    plt.plot(rad2tbb(radiance, frequency))
+    plt.plot(spec_iasi2giirs - spec1)
     plt.tight_layout()
     plt.savefig('004.png')
     plt.show()
 
-    print('sum: ', sum(spec_iasi2cris - spec1))
+    print('sum: ', sum(spec_iasi2giirs - spec1))
 
-    np.savetxt(r'D:\nsmc\LBL\data\iasi_002.csv', spec_iasi2cris, delimiter=',')
+    np.savetxt(r'D:\nsmc\LBL\data\iasi_002.csv', spec_iasi2giirs, delimiter=',')
 
 
 def main(date):
@@ -96,8 +101,8 @@ def main(date):
     dir_ins = ['/home/cali/data/GapFilling/IASI', ]
     dates = ['20160110', '20160406', '20160626', '20161101']
 
-    dir_out1 = '/home/cali/data/GapFilling/CRISFull'
-    dir_out2 = '/home/cali/data/GapFilling/CRISFull_validate'
+    dir_out1 = '/home/cali/data/GapFilling/GIIRSFull'
+    dir_out2 = '/home/cali/data/GapFilling/GIIRSFull_validate'
     for dir_in in dir_ins:
         in_files = os.listdir(dir_in)
         in_files.sort()
@@ -116,12 +121,12 @@ def main(date):
             out_filename = os.path.basename(in_file)
             out_file = os.path.join(dir_out, out_filename)
             if not os.path.isfile(out_file):
-                iasi2cris(in_file, out_file)
+                iasi2giirs(in_file, out_file)
             else:
                 print("already exist: {}".format(out_file))
 
 
-def iasi2cris(in_file, out_file):
+def iasi2giirs(in_file, out_file):
     """
     :param in_file: IASI L1原始数据绝对路径，全光谱分辨率
     :param out_file: CRIS 数据绝对路径
@@ -151,13 +156,12 @@ def iasi2cris(in_file, out_file):
                 print('!!! Origin data is not night data! continue.')
                 continue
 
-        spec_iasi2cris, wavenumber_iasi2cris, plot_data_iasi2cris = ori2other(
+        spec_iasi2giirs, wavenumber_iasi2giirs, plot_data_iasi2giirs = iasi2hiras(
             radiance, IASI_BAND_F1[iband], IASI_BAND_F2[iband], IASI_D_FREQUENCY[iband],
-            CRIS_BAND_F1[iband], CRIS_BAND_F2[iband], CRIS_D_FREQUENCY[iband],
-            CRIS_F_NYQUIST, CRIS_RESAMPLE_MAXX[iband], CRIS_FILTER_WIDTH[iband],
-            apodization_ori=iasi_apod, apodization_other=cris_apod,
-        )
-        spec_iasi2cris = spec_iasi2cris.reshape(1, -1)
+            GIIRS_BAND_F1[iband], GIIRS_BAND_F2[iband], GIIRS_D_FREQUENCY[iband],
+            GIIRS_F_NYQUIST, GIIRS_RESAMPLE_MAXX[iband], GIIRS_FILTER_WIDTH[iband],
+            apodization_ori=iasi_apod, )
+        spec_iasi2giirs = spec_iasi2giirs.reshape(1, -1)
 
         # 如果转换后的响应值中存在无效值，不进行输出
         condition = radiance <= 0
@@ -167,13 +171,13 @@ def iasi2cris(in_file, out_file):
             continue
 
         if 'spectrum_radiance' not in result_out:
-            result_out['spectrum_radiance'] = spec_iasi2cris
+            result_out['spectrum_radiance'] = spec_iasi2giirs
         else:
-            concatenate = (result_out['spectrum_radiance'], spec_iasi2cris)
+            concatenate = (result_out['spectrum_radiance'], spec_iasi2giirs)
             result_out['spectrum_radiance'] = np.concatenate(concatenate, axis=0)
 
         if 'spectrum_wavenumber' not in result_out:
-            result_out['spectrum_wavenumber'] = wavenumber_iasi2cris.reshape(-1,)
+            result_out['spectrum_wavenumber'] = wavenumber_iasi2giirs.reshape(-1,)
 
     if 'spectrum_radiance' in result_out and 'spectrum_wavenumber' in result_out:
         print(radiances.shape)
@@ -181,59 +185,25 @@ def iasi2cris(in_file, out_file):
         write_hdf5_and_compress(out_file, result_out)
 
 
-def get_noise(name='IASI'):
-    """
-    获取 IASI 的噪声数据
-    mean 为 0，sigma 为 给定值的正态分布
-    :return:
-    """
-    if name == 'IASI':
-        current_dir = os.path.abspath(os.path.curdir)
-        iasi_file = os.path.join(current_dir, 'data', 'iasi_instrument_noise.nc')
-        iasi_nc = Dataset(iasi_file)
-        noise = iasi_nc.variables['iasi_noise'][:]
-        iasi_nc.close()
+# ######################## 带参数的程序入口 ##############################
+if __name__ == "__main__":
+    # 获取程序参数接口
+    ARGS = sys.argv[1:]
+    HELP_INFO = \
+        u"""
+        [arg1]：dir_in
+        [arg2]：dir_out
+        [example]： python app.py arg1 arg2
+        """
+    if "-h" in ARGS:
+        print(HELP_INFO)
+        sys.exit(-1)
+
+    if len(ARGS) != 1:
+        print(HELP_INFO)
+        sys.exit(-1)
     else:
-        return None
-    noise_gauss = create_gauss_noise(noise)
-
-    return noise_gauss
-
-
-def create_gauss_noise(sigmas):
-    """
-    获取 mean 为 0， sigma 为给定值的正态分布
-    :param sigmas:
-    :return:
-    """
-    mean = 0
-    number = 1
-    noises = np.array([], dtype=np.float32)
-    for sigma in sigmas:
-        noise = np.random.normal(mean, sigma, number)
-        noises = np.append(noises, noise)
-    return noises
-
-
-# # ######################## 带参数的程序入口 ##############################
-# if __name__ == "__main__":
-#     # 获取程序参数接口
-#     ARGS = sys.argv[1:]
-#     HELP_INFO = \
-#         u"""
-#         [arg1]：dir_in
-#         [arg2]：dir_out
-#         [example]： python app.py arg1 arg2
-#         """
-#     if "-h" in ARGS:
-#         print(HELP_INFO)
-#         sys.exit(-1)
-#
-#     if len(ARGS) != 1:
-#         print(HELP_INFO)
-#         sys.exit(-1)
-#     else:
-#         ARG1 = ARGS[0]
-#         main(ARG1)
+        ARG1 = ARGS[0]
+        main(ARG1)
 if __name__ == '__main__':
     conv()
