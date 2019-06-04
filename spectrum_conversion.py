@@ -145,11 +145,11 @@ def lbl2other(spectrum_lbl, frequency_begin_lbl, frequency_end_lbl, frequency_in
     return spectrum_other, wavenumber_other, plot_data
 
 
-def ori2other(spectrum_ori, frequency_begin_ori, frequency_end_ori, frequency_interval_ori,
-              frequency_begin_other, frequency_end_other, frequency_interval_other,
-              nyquist_other, opd_other, cos_filter_width,
-              apodization_ori=None, apodization_other=None, plot=False,
-              ):
+def ori2cris(spectrum_ori, frequency_begin_ori, frequency_end_ori, frequency_interval_ori,
+             frequency_begin_other, frequency_end_other, frequency_interval_other,
+             nyquist_other, opd_other, cos_filter_width,
+             apodization_ori=None, plot=False,
+             ):
     plot_data = dict()
     spec_ori = spectrum_ori
     fb_ori = frequency_begin_ori
@@ -297,7 +297,7 @@ def ori2other(spectrum_ori, frequency_begin_ori, frequency_end_ori, frequency_in
 def iasi2hiras(spectrum_ori, frequency_begin_ori, frequency_end_ori, frequency_interval_ori,
                frequency_begin_other, frequency_end_other, frequency_interval_other,
                nyquist_other, opd_other, cos_filter_width,
-               apodization_ori=None, apodization_other=None, plot=False,
+               apodization_ori=None, plot=False,
                ):
     plot_data = dict()
     spec_ori = spectrum_ori
@@ -318,15 +318,11 @@ def iasi2hiras(spectrum_ori, frequency_begin_ori, frequency_end_ori, frequency_i
     # totalnum=width(cm-1)/interval  加1.5是因为要做切趾计算
     n_spectrum = int(np.floor(nyquist_other / fi_ori + 1.5))  # 要在IASI采样的点数
 
-    print(n_spectrum)
-
     spectrum = np.zeros(n_spectrum, dtype=np.float64)  # other光谱
     frequency = np.arange(0, n_spectrum, dtype=np.float64) * fi_ori  # other频率
 
     is_b = int(np.floor(fb_ori / fi_ori + 0.5)) - 1  # 放到other光谱的开始位置,index_spec_begin
     is_e = int(np.floor(fe_ori / fi_ori + 0.5))  # 放到other光谱的结束位置 index_spec_end
-
-    print(is_b, is_e)
 
     spectrum[is_b: is_e] = spec_ori  # spec_ori 放到光谱的对应位置
     # p1 原始光谱格栅到iasi的光谱网格上
@@ -341,8 +337,6 @@ def iasi2hiras(spectrum_ori, frequency_begin_ori, frequency_end_ori, frequency_i
     if_e1 = is_b + 1
     if_b2 = is_e - 1
     if_e2 = is_e + n_filter - 1
-
-    print(if_b1, if_e1, if_b2, if_e2)
 
     frequency_filter = frequency[if_b1:if_e1]  # 600-620cm-1
 
@@ -366,8 +360,6 @@ def iasi2hiras(spectrum_ori, frequency_begin_ori, frequency_end_ori, frequency_i
     spectrum_fft[0:n_spectrum] = spectrum  # 前半部分和spectrum相同
     spectrum_fft[n_spectrum:] = spectrum[-2:0:-1]  # 后半部分是spectrum去掉首末两点的倒置
 
-    print(n_ifg)
-
     # p3 对称的光谱图
     if plot:
         plot_data['p3_x'] = np.arange(0, n_ifg, dtype=np.float64) * fi_ori
@@ -377,8 +369,6 @@ def iasi2hiras(spectrum_ori, frequency_begin_ori, frequency_end_ori, frequency_i
     ifg_ori = np.fft.fft(spectrum_fft) * fi_ori
     # 傅里叶反变换，转换为双边干涉图，光程差 500cm ，双边 1000cm，间隔 dx
     # 共n_ifg个点，13824000，是全部的干涉图，需要截取
-
-    print(len(ifg_ori))
 
     # p4 傅里叶转换后的干涉图
     if plot:
@@ -393,14 +383,10 @@ def iasi2hiras(spectrum_ori, frequency_begin_ori, frequency_end_ori, frequency_i
     # compute index at which the interferogram is truncated
     idx_trunc = int(opd_other / dx_other)  # 计算最大光程差对应的截断点位置,也就是个数
 
-    print('idx_trunc', idx_trunc)
-
     # truncate interferogram
     ifg_other = ifg_ori[0: idx_trunc + 1]
     n_ifg_other = idx_trunc + 1
     x_other = np.arange(0, n_ifg_other, dtype=np.float64) * dx_other
-
-    print('n_ifg_other', n_ifg_other, )
 
     # p5 截取后的iasi干涉图
     if plot:
@@ -424,8 +410,6 @@ def iasi2hiras(spectrum_ori, frequency_begin_ori, frequency_end_ori, frequency_i
     # 干涉图拓展 光程差2*2cm 为 4cm  点数n_ifg_fft 55296 间隔
     # 去掉最大值,和最末的值
 
-    print(n_ifg_fft)
-
     # p7 拓展干涉图的示意图
     if plot:
         plot_data['p7_x'] = np.arange(0, n_ifg_fft, dtype=np.float64) * dx_other
@@ -434,8 +418,6 @@ def iasi2hiras(spectrum_ori, frequency_begin_ori, frequency_end_ori, frequency_i
     # ########## FFT 正变换
     spectrum_other_comp = np.fft.ifft(ifg_fft) * dx_other * n_ifg_fft  # FFT 正变换
     spectrum_other_comp = spectrum_other_comp.real  # 仅使用实数
-
-    print(len(spectrum_other_comp))
 
     # ########## take out other portion of the spectrum
     # 取得iasi的光谱  在干涉图中按2cm最大光程差取完之后，做FFT反变换得到的光谱的分辨率就是0.25cm-1

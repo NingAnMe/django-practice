@@ -96,11 +96,11 @@ def main():
 
     # ################### Compute IASI to CrIS spectrum #############
 
-    spec_iasi2cris, wavenumber_iasi2cris, plot_data_iasi2cris = ori2other(
+    spec_iasi2cris, wavenumber_iasi2cris, plot_data_iasi2cris = ori2cris(
         spec_lbl2iasi, IASI_BAND_F1[iband], IASI_BAND_F2[iband], IASI_D_FREQUENCY[iband],
         CRIS_BAND_F1[iband], CRIS_BAND_F2[iband], CRIS_D_FREQUENCY[iband],
         CRIS_F_NYQUIST, CRIS_RESAMPLE_MAXX[iband], CRIS_FILTER_WIDTH[iband],
-        apodization_ori=iasi_apod, apodization_other=cris_apod,
+        apodization_ori=iasi_apod,
         plot=None,
     )
     print(wavenumber_iasi2cris[0], wavenumber_iasi2cris[-1])

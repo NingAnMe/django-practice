@@ -60,11 +60,11 @@ def conv():
     with h5py.File(in_file, 'r') as h5:
         radiance = h5.get('spectrum')[:8461]
 
-    spec_iasi2cris, wavenumber_iasi2cris, plot_data_iasi2cris = ori2other(
+    spec_iasi2cris, wavenumber_iasi2cris, plot_data_iasi2cris = ori2cris(
         radiance, IASI_BAND_F1[iband], IASI_BAND_F2[iband], IASI_D_FREQUENCY[iband],
         CRIS_BAND_F1[iband], CRIS_BAND_F2[iband], CRIS_D_FREQUENCY[iband],
         CRIS_F_NYQUIST, CRIS_RESAMPLE_MAXX[iband], CRIS_FILTER_WIDTH[iband],
-        apodization_ori=iasi_apod, apodization_other=cris_apod,
+        apodization_ori=iasi_apod,
     )
 
     spec1 = np.loadtxt(r'D:\nsmc\LBL\data\iasi_001.csv', delimiter=',')
@@ -151,11 +151,11 @@ def iasi2cris(in_file, out_file):
                 print('!!! Origin data is not night data! continue.')
                 continue
 
-        spec_iasi2cris, wavenumber_iasi2cris, plot_data_iasi2cris = ori2other(
+        spec_iasi2cris, wavenumber_iasi2cris, plot_data_iasi2cris = ori2cris(
             radiance, IASI_BAND_F1[iband], IASI_BAND_F2[iband], IASI_D_FREQUENCY[iband],
             CRIS_BAND_F1[iband], CRIS_BAND_F2[iband], CRIS_D_FREQUENCY[iband],
             CRIS_F_NYQUIST, CRIS_RESAMPLE_MAXX[iband], CRIS_FILTER_WIDTH[iband],
-            apodization_ori=iasi_apod, apodization_other=cris_apod,
+            apodization_ori=iasi_apod,
         )
         spec_iasi2cris = spec_iasi2cris.reshape(1, -1)
 
