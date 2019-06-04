@@ -86,39 +86,22 @@ def conv():
     np.savetxt(r'D:\nsmc\LBL\data\iasi_002.csv', spec_iasi2cris, delimiter=',')
 
 
-def main(date):
+def main(dir_in, dir_out):
     """
-    :param date:
-    # :param dir_in: 输入目录路径
-    # :param dir_out:  输出目录路径
+    :param dir_in: 输入目录路径
+    :param dir_out:  输出目录路径
     :return:
     """
-    dir_ins = ['/home/cali/data/GapFilling/IASI', ]
-    dates = ['20160110', '20160406', '20160626', '20161101']
-
-    dir_out1 = '/home/cali/data/GapFilling/CRISFull'
-    dir_out2 = '/home/cali/data/GapFilling/CRISFull_validate'
-    for dir_in in dir_ins:
-        in_files = os.listdir(dir_in)
-        in_files.sort()
-        for in_file in in_files:
-            if date not in in_file:
-                continue
-            dir_out = None
-            for d in dates:
-                if d in in_file:
-                    dir_out = dir_out1
-                    break
-            if dir_out is None:
-                dir_out = dir_out2
-            in_file = os.path.join(dir_in, in_file)
-            print('<<< {}'.format(in_file))
-            out_filename = os.path.basename(in_file)
-            out_file = os.path.join(dir_out, out_filename)
-            if not os.path.isfile(out_file):
-                iasi2cris(in_file, out_file)
-            else:
-                print("already exist: {}".format(out_file))
+    in_files = os.listdir(dir_in)
+    in_files.sort()
+    for in_file in in_files:
+        print('<<< {}'.format(in_file))
+        out_filename = os.path.basename(in_file)
+        out_file = os.path.join(dir_out, out_filename)
+        if not os.path.isfile(out_file):
+            iasi2cris(in_file, out_file)
+        else:
+            print("already exist: {}".format(out_file))
 
 
 def iasi2cris(in_file, out_file):
@@ -135,7 +118,6 @@ def iasi2cris(in_file, out_file):
     result_out = dict()
 
     for i, radiance in enumerate(radiances):
-        print('Count: ', i)
         radiance = radiance[:8461]  # 后面都是无效值
         # 如果响应值中存在无效值，不进行转换
         condition = radiance <= 0
@@ -147,7 +129,7 @@ def iasi2cris(in_file, out_file):
         # 如果 night = True 那么只处理晚上数据
         if NIGHT:
             sz = sun_zenith[i]
-            if sz <= 95:
+            if sz <= 85:
                 print('!!! Origin data is not night data! continue.')
                 continue
 
@@ -229,12 +211,11 @@ if __name__ == "__main__":
         print(HELP_INFO)
         sys.exit(-1)
 
-    if len(ARGS) != 1:
+    if len(ARGS) != 2:
         print(HELP_INFO)
         sys.exit(-1)
     else:
-        ARG1 = ARGS[0]
-        main(ARG1)
+        main(*ARGS)
 
 # if __name__ == '__main__':
 #     conv()
