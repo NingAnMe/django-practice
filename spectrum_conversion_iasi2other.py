@@ -27,8 +27,8 @@ IASI_FILTER_WIDTH = [20.0, ]  # cm-1  # COS过滤器过滤的宽度
 GIIRS_F_NYQUIST = 5875.0
 GIIRS_RESAMPLE_MAXX = [0.8, ]
 GIIRS_D_FREQUENCY = [0.625, ]
-GIIRS_BAND_F1 = [650.00, ]
-GIIRS_BAND_F2 = [2755.00, ]
+GIIRS_BAND_F1 = [645.625, ]
+GIIRS_BAND_F2 = [2760., ]
 GIIRS_FILTER_WIDTH = [20.0, ]
 
 # IASI_F_NYQUIST = 6912.0  # 频带宽度  cm-1
@@ -135,7 +135,7 @@ def iasi2giirs(in_file, out_file):
         # 如果 night = True 那么只处理晚上数据
         if NIGHT:
             sz = sun_zenith[i]
-            if sz <= 85:
+            if sz <= 120:
                 print('!!! Origin data is not night data! continue.')
                 continue
 

@@ -23,8 +23,11 @@ class LoaderCrisL1:
     def __init__(self, in_file):
         self.in_file = in_file
 
-    def get_radiance(self):
-        pass
+    def get_radiance(self, coeff_file=None):
+        if coeff_file is None:
+            return self.get_spectrum_radiance()
+        else:
+            return self.get_spectrum_radiance_full(coeff_file)
 
     def get_spectrum_radiance(self):
         with h5py.File(self.in_file, 'r') as h5r:
@@ -49,27 +52,16 @@ class LoaderCrisL1:
             sr_mw = sr_mw[:, :, :, 2:-2]
             sr_sw = sr_sw[:, :, :, 2:-2]
 
-            # response = np.concatenate((sr_lw, sr_mw, sr_sw), axis=3)
-            # response.reshape(-1, response[-1])
+            response = np.concatenate((sr_lw, sr_mw, sr_sw), axis=3)
+            response.reshape(-1, 2211)
+            wave_lw = np.arange(650., 1095.0 + 0.625, 0.625)
+            wave_mw = np.arange(1210.0, 1750 + 0.625, 0.625)
+            wave_sw = np.arange(2155.0, 2550.0 + 0.625, 0.625)
+            wave_number = np.concatenate((wave_lw, wave_mw, wave_sw))
 
-        return sr_lw, sr_mw, sr_sw
+        return wave_number, response
 
-    @staticmethod
-    def get_spectrum_wavenumber():
-        wavenumber_lw = np.arange(650., 1095.0 + 0.625, 0.625)
-        wavenumber_mw = np.arange(1210.0, 1750 + 0.625, 0.625)
-        wavenumber_sw = np.arange(2155.0, 2550.0 + 0.625, 0.625)
-        return wavenumber_lw, wavenumber_mw, wavenumber_sw
-
-    def get_spectrum_response_wavenumber(self):
-        pass
-
-
-class LoadRealCris:
-    def __init__(self, in_file):
-        self.in_file = in_file
-
-    def get_spectrum_radiance(self, coeff_file):
+    def get_spectrum_radiance_full(self, coeff_file):
         """
         return 光谱波数和响应值，1维，2维
         """
@@ -92,17 +84,12 @@ class LoadRealCris:
 
         # 切趾计算 w0*n-1 + w1*n + w2*n+1 当作n位置的修正值
         # 开头和结尾不参与计算
-        real_lw[:, :, :, 1:-1] = w0 * real_lw[:, :, :, :-2] + \
-            w1 * real_lw[:, :, :, 1:-1] + w2 * real_lw[:, :, :, 2:]
-        real_mw[:, :, :, 1:-1] = w0 * real_mw[:, :, :, :-2] + \
-            w1 * real_mw[:, :, :, 1:-1] + w2 * real_mw[:, :, :, 2:]
-        real_sw[:, :, :, 1:-1] = w0 * real_sw[:, :, :, :-2] + \
-            w1 * real_sw[:, :, :, 1:-1] + w2 * real_sw[:, :, :, 2:]
-        print(real_lw.shape)
+        real_lw[:, :, :, 1:-1] = w0 * real_lw[:, :, :, :-2] + w1 * real_lw[:, :, :, 1:-1] + w2 * real_lw[:, :, :, 2:]
+        real_mw[:, :, :, 1:-1] = w0 * real_mw[:, :, :, :-2] + w1 * real_mw[:, :, :, 1:-1] + w2 * real_mw[:, :, :, 2:]
+        real_sw[:, :, :, 1:-1] = w0 * real_sw[:, :, :, :-2] + w1 * real_sw[:, :, :, 1:-1] + w2 * real_sw[:, :, :, 2:]
         real_lw = real_lw[:, :, :, 2:-2]
         real_mw = real_mw[:, :, :, 2:-2]
         real_sw = real_sw[:, :, :, 2:-2]
-        print(real_lw.shape)
 
         # 波数范围和步长
         wave_number = np.arange(650., 2755.0 + 0.625, 0.625)
@@ -121,7 +108,7 @@ class LoadRealCris:
 
         response_new = np.dot(response_old, p0)
         response_new = response_new + c0
-        print('4', response_new.shape)
+
         ch_part1 = gap_num[0]
         ch_part2 = gap_num[0] + gap_num[1]
         ch_part3 = gap_num[0] + gap_num[1] + gap_num[2]
@@ -139,6 +126,179 @@ class LoadRealCris:
         response = response.reshape(shape[0], 1, shape[1])
 
         return wave_number, response
+
+    @staticmethod
+    def get_spectrum_wavenumber():
+        wave_lw = np.arange(650., 1095.0 + 0.625, 0.625)
+        wave_mw = np.arange(1210.0, 1750 + 0.625, 0.625)
+        wave_sw = np.arange(2155.0, 2550.0 + 0.625, 0.625)
+        wave_number = np.concatenate((wave_lw, wave_mw, wave_sw))
+        return wave_number
+
+    @staticmethod
+    def get_spectrum_wavenumber_full():
+        wave_number = np.arange(650., 2755.0 + 0.625, 0.625)
+        return wave_number
+
+
+class LoaderHirasL1:
+    def __init__(self, in_file):
+        self.in_file = in_file
+
+    def get_radiance(self, coeff_file=None):
+        if coeff_file is None:
+            return self.get_spectrum_radiance()
+        else:
+            return self.get_spectrum_radiance_full(coeff_file)
+
+    def get_spectrum_radiance(self):
+        with h5py.File(self.in_file, 'r') as h5r:
+            sds_name = '/Data/ES_RealLW'
+            real_lw = h5r.get(sds_name)[:]
+            sds_name = '/Data/ES_RealMW1'
+            real_mw = h5r.get(sds_name)[:]
+            sds_name = '/Data/ES_RealMW2'
+            real_sw = h5r.get(sds_name)[:]
+
+        # 增加切趾计算
+        w0 = 0.23
+        w1 = 1 - 2 * w0
+        w2 = w0
+        real_lw[:, :, :, 1:-1] = w0 * real_lw[:, :, :, :-2] + w1 * real_lw[:, :, :, 1:-1] + w2 * real_lw[:, :, :, 2:]
+        real_mw[:, :, :, 1:-1] = w0 * real_mw[:, :, :, :-2] + w1 * real_mw[:, :, :, 1:-1] + w2 * real_mw[:, :, :, 2:]
+        real_sw[:, :, :, 1:-1] = w0 * real_sw[:, :, :, :-2] + w1 * real_sw[:, :, :, 1:-1] + w2 * real_sw[:, :, :, 2:]
+
+        real_lw = real_lw[:, :, :, 2:-2]
+        real_mw = real_mw[:, :, :, 2:-2]
+        real_sw = real_sw[:, :, :, 2:-2]
+
+        response = np.concatenate((real_lw, real_mw, real_sw), axis=3)
+        response.reshape(-1, 2275)
+        wave_lw = np.arange(650, 1135. + 0.625, 0.625)
+        wave_mw = np.arange(1210., 1750. + 0.625, 0.625)
+        wave_sw = np.arange(2155., 2550. + 0.625, 0.625)
+        wave_number = np.concatenate((wave_lw, wave_mw, wave_sw))
+
+        return wave_number, response
+
+    def get_spectrum_radiance_full(self, coeff_file):
+        """
+        return 光谱波数和响应值，1维，2维
+        """
+        s = (3480, 1)
+        # 增加切趾计算
+        w0 = 0.23
+        w1 = 1 - 2 * w0
+        w2 = w0
+        data_file = self.in_file
+        with h5py.File(data_file, 'r') as h5r:
+            sds_name = '/Data/ES_RealLW'
+            real_lw = h5r.get(sds_name)[:]
+            sds_name = '/Data/ES_RealMW1'
+            real_mw = h5r.get(sds_name)[:]
+            sds_name = '/Data/ES_RealMW2'
+            real_sw = h5r.get(sds_name)[:]
+
+        # 切趾计算 w0*n-1 + w1*n + w2*n+1 当作n位置的修正值
+        # 开头和结尾不参与计算
+        real_lw[:, :, :, 1:-1] = w0 * real_lw[:, :, :, :-2] + w1 * real_lw[:, :, :, 1:-1] + w2 * real_lw[:, :, :, 2:]
+        real_mw[:, :, :, 1:-1] = w0 * real_mw[:, :, :, :-2] + w1 * real_mw[:, :, :, 1:-1] + w2 * real_mw[:, :, :, 2:]
+        real_sw[:, :, :, 1:-1] = w0 * real_sw[:, :, :, :-2] + w1 * real_sw[:, :, :, 1:-1] + w2 * real_sw[:, :, :, 2:]
+
+        real_lw = real_lw[:, :, :, 2:-2]
+        real_mw = real_mw[:, :, :, 2:-2]
+        real_sw = real_sw[:, :, :, 2:-2]
+
+        # 波数范围和步长
+        wave_number = np.arange(650., 2755.0 + 0.625, 0.625)
+
+        # 响应值拼接起来 30*29*4*n
+        response_old = np.concatenate((real_lw, real_mw, real_sw), axis=3)
+
+        last_s = response_old.shape[-1]
+        #  30*29*4*n 变成 30*29*4 = 3480 *n
+        response_old = response_old.reshape(s[0], last_s)
+        #                 self.test_w = wave_number_old
+        #                 self.test_r = response_old
+        #                 print '23', response_old.shape
+
+        with h5py.File(coeff_file, 'r') as h5r:
+            c0 = h5r.get('C0')[:]
+            p0 = h5r.get('P0')[:]
+            gap_num = h5r.get('GAP_NUM')[:]
+
+        response_new = np.dot(response_old, p0)
+        response_new = response_new + c0
+        ch_part1 = gap_num[0]
+        ch_part2 = gap_num[0] + gap_num[1]
+        ch_part3 = gap_num[0] + gap_num[1] + gap_num[2]
+        real_lw_e = response_new[:, 0:ch_part1]
+        real_mw_e = response_new[:, ch_part1:ch_part2]
+        real_sw_e = response_new[:, ch_part2:ch_part3]
+
+        # 把原响应值 维度转成2维
+        real_lw = real_lw.reshape(s[0], real_lw.shape[-1])
+        real_mw = real_mw.reshape(s[0], real_mw.shape[-1])
+        real_sw = real_sw.reshape(s[0], real_sw.shape[-1])
+        response = np.concatenate((real_lw, real_lw_e, real_mw, real_mw_e, real_sw, real_sw_e), axis=1)
+
+        return wave_number, response
+
+    @staticmethod
+    def get_spectrum_wavenumber():
+        wave_lw = np.arange(650, 1135. + 0.625, 0.625)
+        wave_mw = np.arange(1210., 1750. + 0.625, 0.625)
+        wave_sw = np.arange(2155., 2550. + 0.625, 0.625)
+        wave_number = np.concatenate((wave_lw, wave_mw, wave_sw))
+        return wave_number
+
+    @staticmethod
+    def get_spectrum_wavenumber_full():
+        wave_number = np.arange(650., 2755.0 + 0.625, 0.625)
+        return wave_number
+
+    def get_longitude(self):
+        """
+        return longitude
+        """
+        with h5py.File(self.in_file, 'r') as h5r:
+            data_pre = h5r.get('/Geolocation/Longitude')[:]
+
+        # 过滤无效值
+        invalid_index = np.logical_or(data_pre < -180, data_pre > 180)
+        data_pre = data_pre.astype(np.float32)
+        data_pre[invalid_index] = np.nan
+
+        return data_pre
+
+    def get_latitude(self):
+        """
+        return latitude
+        """
+        with h5py.File(self.in_file, 'r') as h5r:
+            data_pre = h5r.get('/Geolocation/Latitude')[:]
+
+        # 过滤无效值
+        invalid_index = np.logical_or(data_pre < -180, data_pre > 180)
+        data_pre = data_pre.astype(np.float32)
+        data_pre[invalid_index] = np.nan
+
+        return data_pre
+
+    def get_solar_zenith(self):
+        """
+        return solar_zenith
+        """
+        with h5py.File(self.in_file, 'r') as h5r:
+            data_pre = h5r.get('/Geolocation/Solar_Zenith')[:]
+        # 过滤无效值
+        vmin = 0.
+        vmax = 18000.
+        invalid_index = np.logical_or(data_pre < vmin, data_pre > vmax)
+        data_pre = data_pre.astype(np.float32)
+        data_pre[invalid_index] = np.nan
+        data = data_pre / 100.
+        return data
 
 
 class LoaderIasiL1:
@@ -196,7 +356,7 @@ class LoaderIasiL1:
         del product
         return data
 
-    def get_sun_zenith(self):
+    def get_solar_zenith(self):
         """
         获取太阳天顶角
         :return:
@@ -292,38 +452,9 @@ def plot_iasi(in_file, out_file, format_kwargs=None, plot_kwargs=None):
 
 
 if __name__ == '__main__':
-    in_file_cris = r'D:\nsmc\gap_filling_data\cris_20180423.h5'
+    in_file_cris = r'D:\SourceData\RemoteSensing\NPP\CRIS\L1\GCRSO-SCRIF-SCRIS_npp_d20180423_t0001359_e0009337_b33605_c20180508065831987506_nobc_ops.h5'
+    in_file_hiras = r'D:\SourceData\RemoteSensing\FY3D\HIRAS\L1\FY3D_HIRAS_GBAL_L1_20180326_0045_016KM_MS.HDF'
 
-    format_kwargs_cris = {
-        'x_axis_min': 0,
-        'x_axis_max': 3000,
-        'x_interval': 500,
-        'x_label': 'Wavenumber($cm^{-1}$)',
-
-        'y_axis_min': 0,
-        'y_axis_max': 150,
-        'y_interval': 30,
-        'y_label': 'Radiance($mw/m^2/sr/cm^{-1}$)'
-
-    }
-
-    out_file_cris = 'pic\CRIS_p0.png'
-    plot_cris(in_file_cris, out_file_cris, format_kwargs=format_kwargs_cris)
-
-    in_file_iasi = r'D:\nsmc\gap_filling_data\iasi_20180104.h5'
-
-    format_kwargs_iasi = {
-        'x_axis_min': 0,
-        'x_axis_max': 3000,
-        'x_interval': 500,
-        'x_label': 'Wavenumber($cm^{-1}$)',
-
-        'y_axis_min': 0,
-        'y_axis_max': 150,
-        'y_interval': 30,
-        'y_label': 'Radiance($mw/m^2/sr/cm^{-1}$)'
-
-    }
-
-    out_file_iasi = 'pic\IASI_p0.png'
-    plot_iasi(in_file_iasi, out_file_iasi, format_kwargs=format_kwargs_iasi)
+    hiras_loader = LoaderHirasL1(in_file_hiras)
+    wn, rad = hiras_loader.get_radiance()
+    print(wn.shape, rad.shape)

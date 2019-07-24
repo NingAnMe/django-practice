@@ -356,7 +356,7 @@ class LoaderIasiL1:
         del product
         return data
 
-    def get_sun_zenith(self):
+    def get_solar_zenith(self):
         """
         获取太阳天顶角
         :return:
@@ -452,8 +452,12 @@ def plot_iasi(in_file, out_file, format_kwargs=None, plot_kwargs=None):
 
 
 if __name__ == '__main__':
-    in_file_cris = r'D:\SourceData\RemoteSensing\NPP\CRIS\L1\GCRSO-SCRIF-SCRIS_npp_d20180423_t0001359_e0009337_b33605_c20180508065831987506_nobc_ops.h5'
+    in_file_cris = r'/nas03/CMA_GSICS/SourceData/NPP/CRIS/L1/ORBIT/2019/20190616/GCRSO-SCRIF-SCRIS_npp_d20190616_t0041039_e0049017_b39550_c20190618050118432222_noac_ops.h5'
     in_file_hiras = r'D:\SourceData\RemoteSensing\FY3D\HIRAS\L1\FY3D_HIRAS_GBAL_L1_20180326_0045_016KM_MS.HDF'
+
+    cris_loader = LoaderCrisL1(in_file_cris)
+    wn, rad = cris_loader.get_radiance()
+    print(wn.shape, rad.shape)
 
     hiras_loader = LoaderHirasL1(in_file_hiras)
     wn, rad = hiras_loader.get_radiance()
