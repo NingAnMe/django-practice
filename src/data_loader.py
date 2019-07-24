@@ -370,52 +370,51 @@ class LoaderIasiL1:
         return zenith
 
 
-class LoaderCrisFull:
+class LoaderMatch:
     def __init__(self, in_file):
         self.in_file = in_file
 
-    def get_spectrum_radiance(self):
-        with h5py.File(self.in_file, 'r') as h5r:
-            data = h5r.get('spectrum_radiance').value
-        return data
+    def get_lat(self, sat_num):
+        dataset_name = 'S{}_Lat'.format(sat_num)
+        with h5py.File(self.in_file, 'r') as hdf5:
+            data = hdf5.get(dataset_name)[:]
+            return data
 
-    def get_spectrum_wavenumber(self):
-        with h5py.File(self.in_file, 'r') as h5r:
-            data = h5r.get('spectrum_wavenumber').value
-        return data
+    def get_lon(self, sat_num):
+        dataset_name = 'S{}_Lon'.format(sat_num)
+        with h5py.File(self.in_file, 'r') as hdf5:
+            data = hdf5.get(dataset_name)[:]
+            return data
 
+    def get_solz(self, sat_num):
+        dataset_name = 'S{}_SolZ'.format(sat_num)
+        with h5py.File(self.in_file, 'r') as hdf5:
+            data = hdf5.get(dataset_name)[:]
+            return data
 
-def plot_cris(in_file, out_file, format_kwargs=None, plot_kwargs=None):
-    loader = LoaderCrisL1(in_file)
-    wavenumbers = loader.get_spectrum_wavenumber()
-    responses = loader.get_spectrum_radiance()
+    def get_rad(self, sat_num):
+        dataset_name = 'S{}_Rad'.format(sat_num)
+        with h5py.File(self.in_file, 'r') as hdf5:
+            data = hdf5.get(dataset_name)[:]
+            return data
 
-    if format_kwargs is None:
-        format_kwargs = {}
-    style_path = STYLE_PATH
-    style_file = os.path.join(style_path, 'plot_regression.mplstyle')
-    plt.style.use(style_file)
-    fig_size = (6.4, 4.8)
-    dpi = 100
-    fig = plt.figure(figsize=fig_size, dpi=dpi)
+    def get_wn(self, sat_num):
+        dataset_name = 'S{}_Wn'.format(sat_num)
+        with h5py.File(self.in_file, 'r') as hdf5:
+            data = hdf5.get(dataset_name)[:]
+            return data
 
-    plot_ax = PlotAx()
-    ax1 = plt.subplot2grid((1, 1), (0, 0))
-    if plot_kwargs is None:
-        plot_kwargs = dict()
-    for x, y in zip(wavenumbers, responses):
-        ax1.plot(x, y[0, 0, 0], **plot_kwargs)
+    def get_rad_full(self, sat_num):
+        dataset_name = 'S{}_Rad_full'.format(sat_num)
+        with h5py.File(self.in_file, 'r') as hdf5:
+            data = hdf5.get(dataset_name)[:]
+            return data
 
-    # ##### 格式化图片
-    if format_kwargs is None:
-        format_kwargs = dict()
-    plot_ax.format_ax(ax1, **format_kwargs)
-    plt.tight_layout()
-    # ##### 保存图片
-    fig.savefig(out_file, dpi=100)
-    fig.clear()
-    plt.close()
-    print('>>> {}'.format(out_file))
+    def get_wn_full(self, sat_num):
+        dataset_name = 'S{}_Wn_full'.format(sat_num)
+        with h5py.File(self.in_file, 'r') as hdf5:
+            data = hdf5.get(dataset_name)[:]
+            return data
 
 
 def plot_iasi(in_file, out_file, format_kwargs=None, plot_kwargs=None):
