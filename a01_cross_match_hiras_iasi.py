@@ -72,25 +72,21 @@ def main():
                 for in_file2 in in_files2:
                     in_file1 = in_file1.replace('/home/gsics', '')
                     in_file2 = in_file2.replace('/home/gsics', '')
+                    print(in_file1)
+                    print(in_file2)
                     loader_hiras = LoaderHirasL1(in_file1)
                     loader_iasi = ReadIasiL1(in_file2)
 
-                    lons1 = loader_hiras.get_longitude().reshape(-1,)
-                    lats1 = loader_hiras.get_latitude().reshape(-1,)
-                    wn1, rad1 = loader_hiras.get_radiance()
-                    wn1 = wn1.reshape(-1,)
-                    rad1 = rad1.reshape(-1, 2275)
-                    sza1 = loader_hiras.get_solar_zenith().reshape(-1,)
-                    wn_full1, rad_full1 = loader_hiras.get_radiance(coeff_file=coeff_file)
+                    try:
+                        lons1 = loader_hiras.get_longitude().reshape(-1,)
+                        lats1 = loader_hiras.get_latitude().reshape(-1,)
 
-                    lons2 = loader_iasi.get_longitude().reshape(-1,)
-                    lats2 = loader_iasi.get_latitude().reshape(-1,)
-                    wn2, rad2 = loader_iasi.get_spectrum_radiance()
-                    wn2 = wn2[:8461]
-                    rad2 = rad2[:, :8461]
-                    sza2 = loader_iasi.get_solar_zenith().reshape(-1,)
+                        lons2 = loader_iasi.get_longitude().reshape(-1,)
+                        lats2 = loader_iasi.get_latitude().reshape(-1,)
 
-                    wn_full2 = wn_full1
+                    except IOError as why:
+                        print(why)
+                        continue
 
                     # for data in (lons1, lats1, rad1, wn1, sza1, rad_full1, wn_full1,
                     #              lons2, lats2, rad2, wn2, sza2):
@@ -110,22 +106,38 @@ def main():
                     if index_dist.sum() < 2:
                         continue
 
-                    result = {
-                        'S1_Lat': lats1[index][index_dist],
-                        'S1_Lon': lons1[index][index_dist],
-                        'S1_SolZ': sza1[index][index_dist],
-                        'S1_Rad': rad1[index][index_dist],
-                        'S1_Wn': wn1,
-                        'S1_Rad_full': rad_full1[index][index_dist],
-                        'S1_Wn_full': wn_full1,
+                    wn1, rad1 = loader_hiras.get_radiance()
+                    wn1 = wn1.reshape(-1,)
+                    rad1 = rad1.reshape(-1, 2275)
+                    sza1 = loader_hiras.get_solar_zenith().reshape(-1,)
+                    wn_full1, rad_full1 = loader_hiras.get_radiance(coeff_file=coeff_file)
 
-                        'S2_Lat': lats2[index_dist],
-                        'S2_Lon': lons2[index_dist],
-                        'S2_SolZ': sza2[index_dist],
-                        'S2_Rad': rad2[index_dist],
-                        'S2_Wn': wn2,
-                        'S2_Wn_full': wn_full2,
-                    }
+                    wn2, rad2 = loader_iasi.get_spectrum_radiance()
+                    wn2 = wn2[:8461]
+                    rad2 = rad2[:, :8461]
+                    sza2 = loader_iasi.get_solar_zenith().reshape(-1, )
+                    wn_full2 = wn_full1
+
+                    try:
+                        result = {
+                            'S1_Lat': lats1[index][index_dist],
+                            'S1_Lon': lons1[index][index_dist],
+                            'S1_SolZ': sza1[index][index_dist],
+                            'S1_Rad': rad1[index][index_dist],
+                            'S1_Wn': wn1,
+                            'S1_Rad_full': rad_full1[index][index_dist],
+                            'S1_Wn_full': wn_full1,
+
+                            'S2_Lat': lats2[index_dist],
+                            'S2_Lon': lons2[index_dist],
+                            'S2_SolZ': sza2[index_dist],
+                            'S2_Rad': rad2[index_dist],
+                            'S2_Wn': wn2,
+                            'S2_Wn_full': wn_full2,
+                        }
+                    except IndexError as why:
+                        print(why)
+                        continue
                     for key in result.keys():
                         # print(result[key].shape)
                         if key not in results:
