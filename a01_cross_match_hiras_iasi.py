@@ -7,6 +7,7 @@
 from __future__ import print_function
 
 import os
+import sys
 import yaml
 
 import numpy as np
@@ -17,6 +18,7 @@ from PB.DRC.pb_drc_IASI import ReadIasiL1
 from hdf5 import write_hdf5_and_compress
 from spectrum_conversion import iasi2hiras
 from util import iasi_apod
+from a02_plot_hiras_iasi import main as match_plot
 
 DIST = 0.05  # 距离阈值
 IBAND = [0, ]  # band 1、 2 or 3，光谱带
@@ -43,13 +45,19 @@ GIIRS_FILTER_WIDTH = [20.0, ]
 # GIIRS的仪器参数和HIRAS相同，HIRAS切趾以后的通道范围为650.625~2755（9:3378）
 
 
-def main():
-    out_dir = '/nas01/Data_gapfilling/match_HIRAS+IASI'
-    coeff_file = 'Model/linear_model_attribute_test_hiras.h5'
+START_DATE = '20180701'
+END_DATE = '20180731'
+
+
+def main(version):
+    out_dir = '/nas01/Data_gapfilling/match_HIRAS+IASI_{}'.format(version)
+    coeff_file = 'Model/linear_model_attribute_test_hiras_{}.h5'.format(version)
     in_dir = '/nas03/CMA_GSICS_TEST/CROSS/InterfaceFile/FY3D+MERSI_METOP-A+IASI/job_0110/'
     dir_names = os.listdir(in_dir)
     dir_names.sort()
     for dir_name in dir_names:
+        if not START_DATE <= dir_name <= END_DATE:
+            continue
         file_names = os.listdir(os.path.join(in_dir, dir_name))
 
         results = {}
@@ -116,7 +124,6 @@ def main():
                     wn2 = wn2[:8461]
                     rad2 = rad2[:, :8461]
                     sza2 = loader_iasi.get_solar_zenith().reshape(-1, )
-                    wn_full2 = wn_full1
 
                     try:
                         result = {
@@ -133,7 +140,6 @@ def main():
                             'S2_SolZ': sza2[index_dist],
                             'S2_Rad': rad2[index_dist],
                             'S2_Wn': wn2,
-                            'S2_Wn_full': wn_full2,
                         }
                     except IndexError as why:
                         print(why)
@@ -156,12 +162,17 @@ def main():
                 GIIRS_BAND_F1[iband], GIIRS_BAND_F2[iband], GIIRS_D_FREQUENCY[iband],
                 GIIRS_F_NYQUIST, GIIRS_RESAMPLE_MAXX[iband], GIIRS_FILTER_WIDTH[iband],
                 apodization_ori=iasi_apod, )
-            rad_full2[count, :] = spec_iasi2hiras[9:3378]
+            rad_full2[count, :] = spec_iasi2hiras[7:3376]
             count += 1
+            if 'S2_Wn_full' not in results:
+                wn_full2 = wavenumber_iasi2hiras[7:3376]
+                results['S2_Wn_full'] = wn_full2
         results['S2_Rad_full'] = rad_full2
                         # print(results[key].shape)
         write_hdf5_and_compress(out_file, results)
 
 
 if __name__ == '__main__':
-    main()
+    args = sys.argv[1:]
+    main(args[0])
+    match_plot(args[0])
