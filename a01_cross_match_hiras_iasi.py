@@ -18,7 +18,6 @@ from PB.DRC.pb_drc_IASI import ReadIasiL1
 from hdf5 import write_hdf5_and_compress
 from spectrum_conversion import iasi2hiras
 from util import iasi_apod
-from a02_plot_hiras_iasi import main as match_plot
 
 DIST = 0.05  # 距离阈值
 IBAND = [0, ]  # band 1、 2 or 3，光谱带
@@ -46,7 +45,7 @@ GIIRS_FILTER_WIDTH = [20.0, ]
 
 
 START_DATE = '20180701'
-END_DATE = '20180731'
+END_DATE = '20181231'
 
 
 def main(version):
@@ -96,18 +95,11 @@ def main(version):
                         print(why)
                         continue
 
-                    # for data in (lons1, lats1, rad1, wn1, sza1, rad_full1, wn_full1,
-                    #              lons2, lats2, rad2, wn2, sza2):
-                    #     print(data.shape)
-                    #     print('=' * 50)
-
                     combined_x_y_arrays = np.dstack([lons1.ravel(), lats1.ravel()])[0]
                     points = np.dstack([lons2.ravel(), lats2.ravel()])[0]
 
                     mytree = KDTree(combined_x_y_arrays)
                     dist, index = mytree.query(points)
-                    # a = np.histogram(dist, bins=20)
-                    # print(a)
 
                     index_dist = dist < DIST
                     print(index_dist.sum())
@@ -168,11 +160,10 @@ def main(version):
                 wn_full2 = wavenumber_iasi2hiras[7:3376]
                 results['S2_Wn_full'] = wn_full2
         results['S2_Rad_full'] = rad_full2
-                        # print(results[key].shape)
         write_hdf5_and_compress(out_file, results)
 
 
 if __name__ == '__main__':
     args = sys.argv[1:]
-    main(args[0])
-    match_plot(args[0])
+    for v in args:
+        main(v)
