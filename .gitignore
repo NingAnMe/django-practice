@@ -44,3 +44,4 @@ venv
 
 # Temp
 .idea
+.ipynb_checkpoints
