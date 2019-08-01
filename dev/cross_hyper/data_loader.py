@@ -301,6 +301,59 @@ class LoaderHirasL1:
         return data
 
 
+class LoaderGiirsL1:
+    def __init__(self, in_file):
+        self.in_file = in_file
+
+    def get_spectrum_radiance_full(self, coeff_file):
+        """
+        return 光谱波数和响应值，1维，2维
+        """
+        # 增加切趾计算
+        w0 = 0.23
+        w1 = 1 - 2 * w0
+        w2 = w0
+        data_file = self.in_file
+        with h5py.File(data_file, 'r') as h5r:
+            sds_name = 'ES_RealLW'
+            real_lw = h5r.get(sds_name)[:].T
+
+            sds_name = 'ES_RealMW'
+            real_mw = h5r.get(sds_name)[:].T
+
+        # 切趾计算 w0*n-1 + w1*n + w2*n+1 当作n位置的修正值
+        # 开头和结尾不参与计算
+        real_lw[:, 1:-1] = w0 * real_lw[:, :-2] + w1 * real_lw[:, 1:-1] + w2 * real_lw[:, 2:]
+        real_mw[:, 1:-1] = w0 * real_mw[:, :-2] + w1 * real_mw[:, 1:-1] + w2 * real_mw[:, 2:]
+
+        real_lw = real_lw[:, 2:-2][:, 94:559]
+        real_mw = real_mw[:, 2:-2][:, 238:860]
+
+        # 波数范围和步长
+        wave_number = np.arange(700., 2250.0 + 0.625, 0.625)
+
+        # 响应值拼接起来
+        response_old = np.concatenate((real_lw, real_mw), axis=1)
+
+        with h5py.File(coeff_file, 'r') as h5r:
+            c0 = h5r.get('C0')[:]
+            p0 = h5r.get('P0')[:]
+            gap_num = h5r.get('GAP_NUM')[:]
+
+        response_new = np.dot(response_old, p0)
+        response_new = response_new + c0
+        ch_part1 = gap_num[0]
+        ch_part2 = gap_num[0] + gap_num[1]
+        ch_part3 = gap_num[0] + gap_num[1] + gap_num[2]
+        real_lw_e = response_new[:, 0:ch_part1]
+        real_mw_e = response_new[:, ch_part1:ch_part2]
+        real_sw_e = response_new[:, ch_part2:ch_part3]
+
+        response = np.concatenate((real_lw_e, real_lw, real_mw_e, real_mw, real_sw_e), axis=1)
+
+        return wave_number, response
+
+
 class LoaderIasiL1:
     def __init__(self, in_file):
         self.in_file = in_file
