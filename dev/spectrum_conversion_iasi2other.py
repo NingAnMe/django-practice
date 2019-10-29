@@ -27,8 +27,10 @@ IASI_FILTER_WIDTH = [20.0, ]  # cm-1  # COS过滤器过滤的宽度
 GIIRS_F_NYQUIST = 5875.0
 GIIRS_RESAMPLE_MAXX = [0.8, ]
 GIIRS_D_FREQUENCY = [0.625, ]
-GIIRS_BAND_F1 = [645.625, ]
-GIIRS_BAND_F2 = [2760., ]
+GIIRS_BAND_F1 = [650.00, ]
+GIIRS_BAND_F2 = [2755.00, ]
+# GIIRS_BAND_F1 = [645.625, ]
+# GIIRS_BAND_F2 = [2760., ]
 GIIRS_FILTER_WIDTH = [20.0, ]
 
 # IASI_F_NYQUIST = 6912.0  # 频带宽度  cm-1
@@ -97,13 +99,16 @@ def main(dir_in, dir_out):
     :param dir_out:  输出目录路径
     :return:
     """
-    in_files = os.listdir(dir_in)
-    in_files.sort()
-    for in_file in in_files:
-        print('<<< {}'.format(in_file))
-        out_filename = os.path.basename(in_file)
+    filenames = os.listdir(dir_in)
+    filenames.sort()
+    for filename in filenames:
+        print('<<< {}'.format(filename))
+        in_file = os.path.join(dir_in, filename)
+        out_filename = filename.replace('IASI', 'Full_GIIRS') + '.hdf'
         out_file = os.path.join(dir_out, out_filename)
         if not os.path.isfile(out_file):
+            if not os.path.isdir(dir_out):
+                os.makedirs(dir_out)
             iasi2giirs(in_file, out_file)
         else:
             print("already exist: {}".format(out_file))
@@ -117,25 +122,26 @@ def iasi2giirs(in_file, out_file):
     """
     loader_iasi = LoaderIasiL1(in_file)
     radiances = loader_iasi.get_spectrum_radiance()
-    sun_zenith = loader_iasi.get_sun_zenith()
+    solar_zenith = loader_iasi.get_solar_zenith()
+    longitude = loader_iasi.get_longitude()
+    latitude = loader_iasi.get_latitude()
     iband = 0
 
     result_out = dict()
 
     for i, radiance in enumerate(radiances):
-        print('Count: ', i)
         radiance = radiance[:8461]  # 后面都是无效值
         # 如果响应值中存在无效值，不进行转换
         condition = radiance <= 0
         idx = np.where(condition)[0]
         if len(idx) > 0:
-            print('!!! Origin data has invalid data! continue.')
+            # print('!!! Origin data has invalid data! continue.')
             continue
 
         # 如果 night = True 那么只处理晚上数据
+        spec_solar_zenith = solar_zenith[i]
         if NIGHT:
-            sz = sun_zenith[i]
-            if sz <= 120:
+            if solar_zenith <= 85:
                 print('!!! Origin data is not night data! continue.')
                 continue
 
@@ -145,6 +151,9 @@ def iasi2giirs(in_file, out_file):
             GIIRS_F_NYQUIST, GIIRS_RESAMPLE_MAXX[iband], GIIRS_FILTER_WIDTH[iband],
             apodization_ori=iasi_apod, )
         spec_iasi2giirs = spec_iasi2giirs.reshape(1, -1)
+        spec_solar_zenith = spec_solar_zenith.reshape(1, -1)
+        spec_longitude = longitude[i].reshape(1, -1)
+        spec_latitude = latitude[i].reshape(1, -1)
 
         # 如果转换后的响应值中存在无效值，不进行输出
         condition = radiance <= 0
@@ -158,6 +167,24 @@ def iasi2giirs(in_file, out_file):
         else:
             concatenate = (result_out['spectrum_radiance'], spec_iasi2giirs)
             result_out['spectrum_radiance'] = np.concatenate(concatenate, axis=0)
+
+        if 'solar_zenith' not in result_out:
+            result_out['solar_zenith'] = spec_solar_zenith
+        else:
+            concatenate = (result_out['solar_zenith'], spec_solar_zenith)
+            result_out['solar_zenith'] = np.concatenate(concatenate, axis=0)
+
+        if 'longitude' not in result_out:
+            result_out['longitude'] = spec_longitude
+        else:
+            concatenate = (result_out['longitude'], spec_longitude)
+            result_out['longitude'] = np.concatenate(concatenate, axis=0)
+
+        if 'latitude' not in result_out:
+            result_out['latitude'] = spec_latitude
+        else:
+            concatenate = (result_out['latitude'], spec_latitude)
+            result_out['latitude'] = np.concatenate(concatenate, axis=0)
 
         if 'spectrum_wavenumber' not in result_out:
             result_out['spectrum_wavenumber'] = wavenumber_iasi2giirs.reshape(-1,)
